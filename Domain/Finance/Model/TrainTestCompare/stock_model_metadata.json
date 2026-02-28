@@ -1,14 +1,15 @@
 {
-    "ticker": "AA",
+    "ticker": "SYNTH",
     "model_type": "Gradient Boosting Regressor",
     "lookback_window": 60,
-    "train_rmse": 0.004757324953836323,
-    "test_rmse": 0.009346463392795152,
-    "train_mae": 0.002315860250025711,
-    "test_mae": 0.006413244052257255,
-    "train_r2": 0.9996084885161712,
-    "test_r2": 0.9906479389490446,
-    "total_samples": 14603,
-    "train_samples": 11682,
-    "test_samples": 2921
+    "train_rmse": 0.0024446517968575434,
+    "test_rmse": 0.10015980096766358,
+    "train_mae": 0.001986417057471548,
+    "test_mae": 0.07714625305906489,
+    "train_r2": 0.999871909650516,
+    "test_r2": 0.35700471887082996,
+    "total_samples": 440,
+    "train_samples": 352,
+    "test_samples": 88,
+    "rl_agent": "stock_trading_rl_agent.zip"
 }
