@@ -26,7 +26,7 @@ def get_llama_model(use_ollama: bool = True, model_name: str = "llama3", **kwarg
             num_predict=max_tokens,
             num_ctx=num_ctx,
             repeat_penalty=kwargs.get("repeat_penalty", 1.2),
-            stop=kwargs.get("stop", ["\n\n", "###", "--", "•", "1.", "2."]),
+            stop=kwargs.get("stop", []),
             mirostat=kwargs.get("mirostat", 2),
             mirostat_eta=kwargs.get("mirostat_eta", 0.1),
             mirostat_tau=kwargs.get("mirostat_tau", 5.0)
@@ -49,7 +49,7 @@ def get_llm(model_type: str = "gemini", **kwargs):
             max_tokens=kwargs.get("max_tokens", 150),
             num_ctx=kwargs.get("num_ctx", 512),
             repeat_penalty=kwargs.get("repeat_penalty", 1.2),
-            stop=kwargs.get("stop", ["\n\n", "###", "--", "•", "1.", "2."]),
+            stop=kwargs.get("stop", []),
             mirostat=kwargs.get("mirostat", 2),
             mirostat_eta=kwargs.get("mirostat_eta", 0.1),
             mirostat_tau=kwargs.get("mirostat_tau", 5.0)
