@@ -1,0 +1,14 @@
+{
+  "plugins": {
+    "general_assistant": {
+      "name": "General Assistant",
+      "domain": "General Knowledge",
+      "expertise": [
+        "general queries"
+      ],
+      "validation_rules": [
+        "Always cite sources"
+      ]
+    }
+  }
+}
