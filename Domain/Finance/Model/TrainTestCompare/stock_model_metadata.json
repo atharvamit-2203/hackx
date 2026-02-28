@@ -1,0 +1,14 @@
+{
+    "ticker": "AA",
+    "model_type": "Gradient Boosting Regressor",
+    "lookback_window": 60,
+    "train_rmse": 0.004757324953836323,
+    "test_rmse": 0.009346463392795152,
+    "train_mae": 0.002315860250025711,
+    "test_mae": 0.006413244052257255,
+    "train_r2": 0.9996084885161712,
+    "test_r2": 0.9906479389490446,
+    "total_samples": 14603,
+    "train_samples": 11682,
+    "test_samples": 2921
+}
