@@ -12,7 +12,7 @@ import FileUploadComponent from "./FileUpload";
 import { FileUpload } from "@/lib/fileUpload";
 
 export default function ChatPanel() {
-    const { activePlugin } = usePlugin();
+    const { activePlugin, switchPlugin, plugins } = usePlugin();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
@@ -29,9 +29,8 @@ export default function ChatPanel() {
         messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
     }, []);
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages, scrollToBottom]);
+    // Removed auto-scroll on every message change to prevent automatic dragging
+    // Users can now scroll freely through chat history
 
     // Check API connection on mount
     useEffect(() => {
@@ -60,9 +59,6 @@ export default function ChatPanel() {
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, welcomeMsg]);
-            
-            // Scroll to bottom when welcome message appears
-            setTimeout(() => scrollToBottom(), 100);
         }
     }, [activePlugin, scrollToBottom]);
 
@@ -82,22 +78,19 @@ export default function ChatPanel() {
         setMessages((prev) => [...prev, userMsg]);
         setIsTyping(true);
         setError(null);
-        
-        // Scroll to bottom when response arrives
-        setTimeout(() => scrollToBottom(), 100);
 
         try {
             let response;
-            
+
             // Use multi-modal messaging if files are uploaded
             if (uploadedFiles.length > 0) {
                 response = await apiService.sendMultiModalMessage(text, uploadedFiles);
             } else {
                 response = await apiService.sendMessage(text);
             }
-            
+
             setIsTyping(false);
-            
+
             const aiMsg: ChatMessage = {
                 id: `ai-${Date.now()}`,
                 text: response.answer,
@@ -111,19 +104,27 @@ export default function ChatPanel() {
                 disclaimer: response.disclaimer,
                 multimodal_analysis: response.multimodal_analysis
             };
-            
+
             setMessages((prev) => [...prev, aiMsg]);
-            
+
+            if (response.domain) {
+                const matched = plugins.find(p =>
+                    p.id.toLowerCase() === response.domain.toLowerCase() ||
+                    p.name.toLowerCase() === response.domain.toLowerCase() ||
+                    p.persona.toLowerCase() === response.domain.toLowerCase()
+                );
+                if (matched && matched.id !== activePlugin.id) {
+                    switchPlugin(matched.id);
+                }
+            }
+
             // Clear uploaded files after sending
             setUploadedFiles([]);
-            
-            // Scroll to bottom when response arrives
-            setTimeout(() => scrollToBottom(), 100);
-            
+
         } catch (err) {
             setIsTyping(false);
             setError("Failed to get response from backend. Please try again.");
-            
+
             // Add error message
             const errorMsg: ChatMessage = {
                 id: `error-${Date.now()}`,
@@ -132,9 +133,6 @@ export default function ChatPanel() {
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, errorMsg]);
-            
-            // Scroll to bottom when error message arrives
-            setTimeout(() => scrollToBottom(), 100);
         }
     };
 
@@ -172,7 +170,7 @@ export default function ChatPanel() {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
                 {messages.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center">
                         <motion.div
@@ -206,10 +204,10 @@ export default function ChatPanel() {
                 )}
 
                 {messages.map((msg, i) => (
-                    <MessageBubble 
-                        key={msg.id} 
-                        message={msg.text} 
-                        sender={msg.sender} 
+                    <MessageBubble
+                        key={msg.id}
+                        message={msg.text}
+                        sender={msg.sender}
                         index={i}
                         domain={msg.domain}
                         confidence={msg.confidence}
@@ -241,11 +239,11 @@ export default function ChatPanel() {
             {/* Input Area */}
             <div className="flex-shrink-0 px-6 pb-4 pt-2 space-y-3 border-t border-white/[0.04]">
                 {/* File Upload */}
-                <FileUploadComponent 
+                <FileUploadComponent
                     onFilesSelected={handleFilesSelected}
                     disabled={!isConnected}
                 />
-                
+
                 {/* Uploaded Files Display */}
                 {uploadedFiles.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -262,8 +260,7 @@ export default function ChatPanel() {
                         </div>
                     </div>
                 )}
-                
-                <SuggestedPrompts onSelect={handleSend} />
+
                 <ChatInput onSend={handleSend} disabled={!isConnected} />
             </div>
         </div>

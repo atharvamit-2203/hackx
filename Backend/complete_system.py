@@ -393,12 +393,16 @@ class HotSwappableSMEPlugin:
                 "Market Conduct Rules"
             ],
             ExpertiseDomain.LEGAL: [
-                "Supreme Court of India",
-                "High Court Judgments",
-                "Bar Council of India Rules",
-                "Indian Penal Code (IPC)",
-                "Civil Procedure Code (CPC)",
-                "Constitution of India"
+                "Supreme Court of India - Landmark Defamation Judgments",
+                "High Court Judgments - Cyber Bullying Cases",
+                "Indian Penal Code (IPC) Section 499/500 - Defamation",
+                "Information Technology Act 2000 - Cyber Defamation",
+                "Civil Procedure Code (CPC) - Civil Suit Procedures",
+                "Constitution of India - Article 19(1)(a) - Freedom of Speech",
+                "Bar Council of India Rules - Professional Conduct",
+                "Evidence Act - Digital Evidence Admissibility",
+                "Criminal Procedure Code (CrPC) - FIR Registration",
+                "Information Technology (Intermediary Guidelines) Rules 2021"
             ],
             ExpertiseDomain.CORPORATE_LAW: [
                 "Companies Act 2013",
@@ -453,9 +457,13 @@ class HotSwappableSMEPlugin:
                 "Provide comprehensive risk analysis with mitigation strategies and controls."
             ),
             ExpertiseDomain.LEGAL: (
-                "You are a Legal Expert AI with expertise in Indian law. Think like a seasoned legal professional. "
-                "Provide comprehensive legal analysis with proper citations to laws, regulations, and case law. "
-                "Use structured legal reasoning and reference authoritative legal sources."
+                "You are a Senior Legal Advocate AI with deep expertise in Indian law, including criminal law, civil law, and cyber law. "
+                "Think like an experienced Indian lawyer practicing in High Courts with 15+ years of experience. "
+                "Provide comprehensive legal analysis with specific references to Indian statutes, landmark judgments, and procedural requirements. "
+                "For defamation cases, reference Section 499/500 of IPC, Information Technology Act, and relevant Supreme Court precedents. "
+                "Include practical steps for filing FIR, civil suit, evidence collection, and jurisdiction considerations. "
+                "Use structured legal reasoning: Issue → Relevant Law → Application → Conclusion → Practical Advice. "
+                "Always cite specific sections, case laws, and procedural requirements under Indian legal system."
             ),
             ExpertiseDomain.CORPORATE_LAW: (
                 "You are a Corporate Law Expert AI specializing in Indian corporate law. Think like a senior corporate lawyer. "
@@ -498,7 +506,7 @@ class HotSwappableSMEPlugin:
         """
         query_lower = query.lower()
         
-        # Legal keywords - expanded and prioritized
+        # Legal keywords - highest priority
         legal_keywords = [
             'legal', 'law', 'court', 'judge', 'lawyer', 'attorney', 'sue', 'lawsuit',
             'contract', 'agreement', 'breach', 'liability', 'damages', 'compensation',
@@ -510,10 +518,11 @@ class HotSwappableSMEPlugin:
             'preamble', 'constitution', 'bill of rights', 'amendment', 'legislation',
             'statutory', 'regulatory', 'compliance', 'legal framework', 'legal system',
             'judicial', 'legislative', 'executive', 'legal precedent', 'legal principle',
-            'legal doctrine', 'legal interpretation', 'legal obligation', 'legal liability'
+            'legal doctrine', 'legal interpretation', 'legal obligation', 'legal liability',
+            'legal advice', 'legal opinion', 'legal counsel', 'legal document'
         ]
         
-        # Finance keywords
+        # Finance keywords - lower priority
         finance_keywords = [
             'finance', 'financial', 'money', 'investment', 'loan', 'credit', 'bank',
             'banking', 'interest', 'mortgage', 'debt', 'asset', 'liability',
@@ -523,17 +532,23 @@ class HotSwappableSMEPlugin:
             'financial reporting', 'financial statement', 'balance sheet', 'income statement'
         ]
         
-        # Count keyword matches with higher priority for legal terms
+        # Count keyword matches
         legal_matches = sum(1 for keyword in legal_keywords if keyword in query_lower)
         finance_matches = sum(1 for keyword in finance_keywords if keyword in query_lower)
         
-        # Special handling for terms that could be both but are primarily legal
-        legal_priority_terms = ['preamble', 'constitution', 'statute', 'act', 'code', 'regulation']
-        if any(term in query_lower for term in legal_priority_terms):
-            legal_matches += 2  # Give extra weight to legal priority terms
+        # Debug logging
+        logger.info(f"Domain detection - Legal matches: {legal_matches}, Finance matches: {finance_matches}")
+        logger.info(f"Query: {query_lower}")
         
-        # Determine domain based on keyword density
+        # Priority 1: Explicit legal terms (highest weight)
+        explicit_legal_terms = ['preamble', 'constitution', 'statute', 'act', 'code', 'court', 'judge', 'lawyer', 'attorney', 'lawsuit']
+        if any(term in query_lower for term in explicit_legal_terms):
+            logger.info("Detected explicit legal terms - returning LEGAL domain")
+            return ExpertiseDomain.LEGAL
+        
+        # Priority 2: More legal matches than finance matches
         if legal_matches > finance_matches:
+            logger.info("More legal matches than finance - returning LEGAL domain")
             # Further refine legal domain
             if any(keyword in query_lower for keyword in ['contract', 'agreement', 'breach']):
                 return ExpertiseDomain.CONTRACT_LAW
@@ -545,7 +560,10 @@ class HotSwappableSMEPlugin:
                 return ExpertiseDomain.LEGAL
             else:
                 return ExpertiseDomain.LEGAL
+        
+        # Priority 3: Finance domain (only if no legal matches)
         elif finance_matches > 0:
+            logger.info("Finance matches detected - returning FINANCE domain")
             # Further refine finance domain
             if any(keyword in query_lower for keyword in ['loan', 'credit', 'mortgage']):
                 return ExpertiseDomain.LOAN_ANALYSIS
@@ -557,9 +575,12 @@ class HotSwappableSMEPlugin:
                 return ExpertiseDomain.RISK_MANAGEMENT
             else:
                 return ExpertiseDomain.FINANCE
+        
+        # Priority 4: Default fallback with legal bias
         else:
+            logger.info("No clear matches - using fallback logic")
             # Default to legal for ambiguous queries that might be legal
-            if any(keyword in query_lower for keyword in ['preamble', 'constitution', 'law']):
+            if any(keyword in query_lower for keyword in ['preamble', 'constitution', 'law', 'legal']):
                 return ExpertiseDomain.LEGAL
             else:
                 return ExpertiseDomain.FINANCE
@@ -619,8 +640,8 @@ class HotSwappableSMEPlugin:
             # For opinion questions, use context-aware handling
             response = self._handle_opinion_question(query, context)
         else:
-            # For factual questions, provide comprehensive response
-            response = self._handle_factual_question(query, query_type)
+            # For factual questions, provide comprehensive response with context
+            response = self._handle_factual_question(query, query_type, context)
         
         logger.info(f"Query processed successfully. Domain: {response.domain.value}")
         return response
@@ -788,7 +809,7 @@ class HotSwappableSMEPlugin:
         
         return "; ".join(extracted_info) if extracted_info else "No specific financial details found"
     
-    def _handle_factual_question(self, query: str, query_type: str) -> SMEResponse:
+    def _handle_factual_question(self, query: str, query_type: str, context: str = "") -> SMEResponse:
         """Handle factual questions with comprehensive expert response"""
         
         # Create comprehensive prompt
@@ -824,10 +845,13 @@ class HotSwappableSMEPlugin:
         # Get source references
         sources = self._get_source_references()
         
+        # Calculate dynamic confidence based on multiple factors
+        confidence = self._calculate_confidence(query, llm_response, context)
+        
         # Create structured response
         response = SMEResponse(
             answer=llm_response,
-            confidence=0.85,  # High confidence for domain expertise
+            confidence=confidence,
             sources=sources,
             methodology=f"Domain expertise in {self.domain.value} with structured reasoning",
             domain=self.domain,
@@ -838,8 +862,236 @@ class HotSwappableSMEPlugin:
         
         return response
     
+    def _calculate_confidence(self, query: str, response: str, context: str = "") -> float:
+        """Calculate dynamic confidence based on deterministic factors"""
+        
+        # Base confidence depends on domain and query type
+        base_confidence = self._get_base_confidence(query)
+        
+        # Factor 1: Domain-specific knowledge availability (deterministic)
+        domain_knowledge = self._assess_domain_knowledge(query)
+        
+        # Factor 2: Context richness (deterministic based on context)
+        context_richness = self._assess_context_richness(context)
+        
+        # Factor 3: Specificity of the query (deterministic)
+        query_specificity = self._assess_query_specificity(query)
+        
+        # Factor 4: Risk level of the query (deterministic)
+        risk_factor = self._assess_query_risk(query)
+        
+        # Factor 5: Response structure (minimal variability)
+        response_structure = self._assess_response_structure(response)
+        
+        # Calculate weighted confidence (deterministic weights)
+        confidence_factors = {
+            'base': base_confidence,
+            'domain_knowledge': domain_knowledge * 0.25,
+            'context_richness': context_richness * 0.20,
+            'query_specificity': query_specificity * 0.15,
+            'risk_factor': risk_factor * 0.15,
+            'response_structure': response_structure * 0.10
+        }
+        
+        # Sum up all factors
+        total_confidence = sum(confidence_factors.values())
+        
+        # Ensure confidence stays within reasonable bounds
+        confidence = max(0.4, min(0.95, total_confidence))
+        
+        # Round to 2 decimal places for consistency
+        confidence = round(confidence, 2)
+        
+        logger.info(f"Confidence calculation: {confidence_factors} -> {confidence}")
+        
+        return confidence
+    
+    def _get_base_confidence(self, query: str) -> float:
+        """Get base confidence based on domain and query characteristics"""
+        query_lower = query.lower()
+        
+        # Higher base confidence for factual questions
+        if any(indicator in query_lower for indicator in ['what is', 'define', 'explain', 'difference', 'how does']):
+            return 0.75
+        # Medium base confidence for analytical questions
+        elif any(indicator in query_lower for indicator in ['analyze', 'compare', 'evaluate']):
+            return 0.70
+        # Lower base confidence for advice questions
+        elif any(indicator in query_lower for indicator in ['should', 'recommend', 'advise']):
+            return 0.65
+        # Default base confidence
+        else:
+            return 0.70
+    
+    def _assess_response_structure(self, response: str) -> float:
+        """Assess response structure (minimal variability)"""
+        structure_score = 0.5  # Base score
+        
+        # Check for structured formatting (consistent)
+        if any(indicator in response for indicator in ['1.', '2.', '•', '-', '*']):
+            structure_score += 0.2
+        
+        # Check for citations (consistent if present)
+        if '[' in response and ']' in response:
+            structure_score += 0.3
+        
+        return min(1.0, structure_score)
+    
+    def _assess_query_risk(self, query: str) -> float:
+        """Assess risk level based on query only (deterministic)"""
+        high_risk_indicators = [
+            'investment advice', 'financial recommendation', 'legal advice', 
+            'medical advice', 'critical decision', 'major purchase', 'loan approval'
+        ]
+        
+        query_lower = query.lower()
+        risk_count = sum(1 for indicator in high_risk_indicators if indicator in query_lower)
+        
+        if risk_count >= 2:
+            return 0.4  # High risk - lower confidence
+        elif risk_count >= 1:
+            return 0.6  # Medium risk
+        else:
+            return 0.8  # Low risk - higher confidence
+    
+    def _assess_response_quality(self, response: str) -> float:
+        """Assess the quality and completeness of the response"""
+        quality_score = 0.5  # Base quality
+        
+        # Check for structured response
+        if len(response) > 200:  # Substantial response
+            quality_score += 0.1
+        
+        # Check for specific examples
+        if any(indicator in response.lower() for indicator in ['example', 'for instance', 'specifically']):
+            quality_score += 0.1
+        
+        # Check for actionable advice
+        if any(indicator in response.lower() for indicator in ['recommend', 'suggest', 'advise', 'should']):
+            quality_score += 0.1
+        
+        # Check for numerical data/quantitative analysis
+        if any(char.isdigit() for char in response):
+            quality_score += 0.1
+        
+        # Check for structured formatting
+        if any(indicator in response for indicator in ['1.', '2.', '•', '-', '*']):
+            quality_score += 0.1
+        
+        return min(1.0, quality_score)
+    
+    def _assess_domain_knowledge(self, query: str) -> float:
+        """Assess how well our domain knowledge covers the query"""
+        domain_keywords = {
+            ExpertiseDomain.FINANCE: ['loan', 'investment', 'interest', 'rate', 'credit', 'debt', 'asset', 'portfolio', 'risk', 'return'],
+            ExpertiseDomain.LEGAL: ['contract', 'agreement', 'law', 'legal', 'court', 'judge', 'liability', 'compliance', 'regulation'],
+            ExpertiseDomain.BANKING: ['bank', 'account', 'deposit', 'withdrawal', 'transaction', 'branch', 'atm', 'cheque'],
+            ExpertiseDomain.INVESTMENT: ['invest', 'stock', 'bond', 'mutual fund', 'portfolio', 'dividend', 'capital', 'market'],
+            ExpertiseDomain.LOAN_ANALYSIS: ['loan', 'borrow', 'lend', 'mortgage', 'emi', 'collateral', 'guarantor', 'credit score']
+        }
+        
+        query_lower = query.lower()
+        domain_words = domain_keywords.get(self.domain, [])
+        
+        # Count matching keywords
+        matches = sum(1 for word in domain_words if word in query_lower)
+        
+        # Calculate knowledge coverage
+        if matches >= 3:
+            return 0.9  # High knowledge coverage
+        elif matches >= 2:
+            return 0.7  # Medium knowledge coverage
+        elif matches >= 1:
+            return 0.5  # Low knowledge coverage
+        else:
+            return 0.3  # Very low knowledge coverage
+    
+    def _assess_context_richness(self, context: str) -> float:
+        """Assess how rich the context is (user-provided information)"""
+        if not context:
+            return 0.3  # No context
+        
+        context_score = 0.3  # Base score for having context
+        
+        # Check for financial information
+        financial_indicators = ['income', 'salary', 'amount', 'rate', 'percent', '%', 'rs', '₹', '$', 'lakhs', 'crores']
+        if any(indicator in context.lower() for indicator in financial_indicators):
+            context_score += 0.2
+        
+        # Check for specific numbers
+        if any(char.isdigit() for char in context):
+            context_score += 0.2
+        
+        # Check for time-related information
+        time_indicators = ['year', 'month', 'period', 'term', 'duration']
+        if any(indicator in context.lower() for indicator in time_indicators):
+            context_score += 0.2
+        
+        # Check for purpose/goal information
+        purpose_indicators = ['purpose', 'goal', 'objective', 'want', 'need', 'plan']
+        if any(indicator in context.lower() for indicator in purpose_indicators):
+            context_score += 0.1
+        
+        return min(1.0, context_score)
+    
+    def _assess_query_specificity(self, query: str) -> float:
+        """Assess how specific the user's query is"""
+        specificity_score = 0.5  # Base specificity
+        
+        # Check for numerical values
+        if any(char.isdigit() for char in query):
+            specificity_score += 0.2
+        
+        # Check for specific terms
+        specific_terms = ['what', 'how', 'why', 'which', 'should', 'recommend', 'compare', 'analyze']
+        if any(term in query.lower() for term in specific_terms):
+            specificity_score += 0.2
+        
+        # Check for context indicators
+        context_terms = ['my', 'i have', 'i need', 'for me', 'situation']
+        if any(term in query.lower() for term in context_terms):
+            specificity_score += 0.2
+        
+        # Check for length (longer queries are often more specific)
+        if len(query) > 50:
+            specificity_score += 0.1
+        
+        return min(1.0, specificity_score)
+    
+    def _assess_source_confidence(self, response: str) -> float:
+        """Assess confidence based on source citations"""
+        # Count citations in response
+        import re
+        citations = re.findall(r'\[(\d+)\]', response)
+        
+        if len(citations) >= 3:
+            return 0.8  # Well-cited
+        elif len(citations) >= 1:
+            return 0.6  # Some citations
+        else:
+            return 0.4  # No citations
+    
+    def _assess_risk_factor(self, query: str, response: str) -> float:
+        """Assess risk level - higher risk queries get lower confidence"""
+        high_risk_indicators = [
+            'investment advice', 'financial recommendation', 'legal advice', 
+            'medical advice', 'critical decision', 'major purchase', 'loan approval'
+        ]
+        
+        query_lower = query.lower()
+        response_lower = response.lower()
+        
+        # Check for high-risk indicators
+        risk_count = sum(1 for indicator in high_risk_indicators if indicator in query_lower or indicator in response_lower)
+        
+        if risk_count >= 2:
+            return 0.3  # High risk - lower confidence
+        elif risk_count >= 1:
+            return 0.5  # Medium risk
+        else:
+            return 0.8  # Low risk - higher confidence
+    
     def _handle_insufficient_details(self, original_query: str) -> SMEResponse:
-        """Handle cases where user doesn't provide required details"""
         
         response_text = f"""I understand you're asking about: "{original_query}"
 
