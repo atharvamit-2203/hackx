@@ -74,6 +74,10 @@ const getDomainColor = (domain?: string, accent?: string) => {
 
 const formatMessage = (text: string) => {
     // Convert markdown-like formatting to HTML
+    if (!text || typeof text !== 'string') {
+        return '';
+    }
+    
     let formatted = text;
     
     // Bold text **text**
@@ -121,6 +125,10 @@ const extractCitations = (text: string) => {
 };
 
 const renderClickableCitations = (text: string, onCitationClick: (index: string) => void) => {
+    if (!text || typeof text !== 'string') {
+        return '';
+    }
+    
     const citations = extractCitations(text);
     let formattedText = text;
     
@@ -305,7 +313,7 @@ export default function MessageBubble({
                             <div className="flex items-center gap-2">
                                 <DomainIcon size={12} style={{ color: domainColor }} />
                                 <span className="text-[11px] font-medium text-white/50">
-                                    {domain.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    {domain ? domain.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
