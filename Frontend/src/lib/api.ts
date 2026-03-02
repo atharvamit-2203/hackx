@@ -1,5 +1,5 @@
 // API Service for Backend Integration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hackx-nssx-7mnt6CLoyfA1yNfgsErHQUiAdhfB.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://plugmind-backend.vercel.app';
 
 export interface ChatResponse {
   answer: string;
