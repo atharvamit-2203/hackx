@@ -1,9 +1,8 @@
-import os
+# Vercel serverless handler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-import uvicorn
 
 app = FastAPI(title="PlugMind Backend API")
 
@@ -37,7 +36,6 @@ async def health_check():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    # Mock response for now - integrate with your actual SME plugin
     response = f"This is a finance expert response to: {request.message}"
     
     return ChatResponse(
@@ -50,14 +48,8 @@ async def chat(request: ChatRequest):
 
 @app.post("/answer")
 async def answer_question(request: ChatRequest):
-    # Alternative endpoint for frontend compatibility
     response = f"Finance expert answer: {request.message}"
-    
     return {"answer": response}
 
-# For Vercel serverless
+# Export for Vercel
 handler = app
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
