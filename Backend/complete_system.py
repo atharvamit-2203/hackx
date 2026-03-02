@@ -1303,7 +1303,7 @@ def main():
     print("Type 'info' to see available domains\n")
     
     # Initialize SME Plugin
-    api_key = "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"
+    api_key = os.getenv("OPENROUTER_API_KEY")  # Use environment variable
     sme_plugin = HotSwappableSMEPlugin(api_key, ExpertiseDomain.FINANCE)
     
     # Load trained stock models
