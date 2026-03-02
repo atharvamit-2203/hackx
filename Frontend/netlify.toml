@@ -3,7 +3,7 @@
   command = "npm run build"
 
 [build.environment]
-  NEXT_PUBLIC_API_URL = "https://hackx-iota.vercel.app"
+  NEXT_PUBLIC_API_URL = "https://hackx-2.onrender.com"
 
 [[redirects]]
   from = "/api/*"
