@@ -55,5 +55,5 @@ async def answer_question(request: ChatRequest):
     
     return {"answer": response}
 
-# For Vercel serverless
+# For Vercel serverless - export the app
 handler = app
