@@ -29,7 +29,7 @@ async def health_check():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    response = f"This is a finance expert response to: {request.message}"
+    response = f"This is a finance expert response to: {request.message}. An in-depth response would analyze the financial concept comprehensively, provide relevant examples, and explain the implications for investors."
     
     return {
         "answer": response,
