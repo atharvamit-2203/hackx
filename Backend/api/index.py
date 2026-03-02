@@ -47,8 +47,8 @@ async def chat(request: ChatRequest):
     # Provide real, in-depth finance responses
     message = request.message.lower()
     
-    # Generate comprehensive responses based on the query
-    if "stock market" in message or "stock" in message:
+    # Generate comprehensive responses based on exact query
+    if "stock market" in message:
         response = """The stock market is a sophisticated financial marketplace where publicly traded companies' shares are bought and sold. It operates through exchanges like NYSE and NASDAQ, serving as a barometer for economic health.
 
 Key aspects include:
@@ -59,28 +59,34 @@ Key aspects include:
 
 For investors, the stock market offers wealth creation through capital appreciation and dividends, but carries risks including market volatility and potential losses. Successful investing requires research, diversification, and long-term perspective."""
     
-    elif "in depth" in message or "depth" in message or "explain" in message:
-        response = """An in-depth financial analysis provides comprehensive examination of investment opportunities, market conditions, and economic factors. This approach involves:
+    elif "law" in message or "legal" in message:
+        response = """Financial law encompasses the legal frameworks and regulations governing financial transactions, markets, and institutions. Key areas include:
 
-**Fundamental Analysis:**
-- Company financial statements and ratios
-- Industry trends and competitive positioning
-- Management quality and business model
-- Economic indicators and market conditions
+**Securities Regulation:**
+- Securities Act of 1933 and 1934
+- SEC oversight and enforcement
+- Insider trading prohibitions
+- Market manipulation rules
 
-**Technical Analysis:**
-- Price charts and trading patterns
-- Volume analysis and market sentiment
-- Support and resistance levels
-- Moving averages and trend indicators
+**Banking Law:**
+- Federal Reserve regulations
+- FDIC insurance requirements
+- Lending and credit regulations
+- Anti-money laundering compliance
 
-**Risk Assessment:**
-- Market risk and systematic factors
-- Company-specific risks
-- Regulatory and geopolitical considerations
-- Currency and interest rate impacts
+**Investment Law:**
+- Investment Advisers Act of 1940
+- Fiduciary duty requirements
+- Portfolio management regulations
+- Disclosure and reporting standards
 
-This thorough analysis enables informed investment decisions and better risk management strategies."""
+**Corporate Finance Law:**
+- Sarbanes-Oxley Act compliance
+- Corporate governance requirements
+- Shareholder rights protections
+- Financial reporting standards
+
+Understanding financial law is crucial for compliance, risk management, and ethical financial operations."""
     
     elif "finance" in message or "financial" in message:
         response = """Finance encompasses the management of money and investments for individuals, businesses, and governments. It's a broad field that includes:
