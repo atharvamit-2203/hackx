@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: plugmind-backend
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main_api.py"
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false

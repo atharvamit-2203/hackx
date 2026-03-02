@@ -39,7 +39,7 @@ export default function ChatPanel() {
                 const isHealthy = await apiService.healthCheck();
                 setIsConnected(isHealthy);
                 if (!isHealthy) {
-                    setError("Unable to connect to backend. Please ensure the backend server is running on localhost:8001");
+                    setError("Unable to connect to backend. Please check your internet connection and try again.");
                 }
             } catch (err) {
                 setError("Backend connection failed. Please try again later.");
@@ -136,7 +136,7 @@ export default function ChatPanel() {
             // Add error message
             const errorMsg: ChatMessage = {
                 id: `error-${Date.now()}`,
-                text: "I apologize, but I'm having trouble connecting to the backend right now. Please ensure the backend server is running on localhost:8001.",
+                text: "I apologize, but I'm having trouble connecting to the backend right now. Please check your internet connection and try again.",
                 sender: "ai",
                 timestamp: new Date(),
             };

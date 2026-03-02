@@ -1,16 +1,15 @@
 {
-  "name": "plugmind-backend",
   "version": 2,
   "builds": [
     {
-      "src": "main_api.py",
+      "src": "api/chat.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/main_api.py"
+      "dest": "/api/chat.py"
     }
   ],
   "env": {
