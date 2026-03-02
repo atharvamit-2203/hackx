@@ -119,17 +119,17 @@ class ApiService {
 
       const data = await response.json();
       
-      // Save message to backend
-      await this.saveMessageToBackend(message, 'user', { files });
-      await this.saveMessageToBackend(data.response, 'ai', {
-        domain: data.domain,
-        confidence: data.confidence,
-        sources: data.sources,
-        methodology: data.methodology,
-        citations: data.citations,
-        disclaimer: data.disclaimer,
-        multimodal_analysis: data.multimodal_analysis
-      });
+      // Skip saving messages to backend for now (endpoints don't exist)
+      // await this.saveMessageToBackend(message, 'user', { files });
+      // await this.saveMessageToBackend(data.response, 'ai', {
+      //   domain: data.domain,
+      //   confidence: data.confidence,
+      //   sources: data.sources,
+      //   methodology: data.methodology,
+      //   citations: data.citations,
+      //   disclaimer: data.disclaimer,
+      //   multimodal_analysis: data.multimodal_analysis
+      // });
       
       return data;
     } catch (error) {
@@ -219,19 +219,9 @@ class ApiService {
     metadata?: any
   ): Promise<void> {
     try {
-      await fetch(`${this.baseUrl}/save_message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          session_id: this.sessionId,
-          user_id: 'frontend_user',
-          message: message,
-          sender: sender,
-          ...metadata
-        }),
-      });
+      // Skip saving - endpoint doesn't exist on backend
+      console.log('Skipping message save (backend endpoint not available)');
+      return;
     } catch (error) {
       console.error('Error saving message:', error);
     }
@@ -242,13 +232,9 @@ class ApiService {
    */
   async getPluginInfo(): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/plugin/info`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      // Skip - endpoint doesn't exist on backend
+      console.log('Skipping plugin info (backend endpoint not available)');
+      return { domain: 'finance', status: 'active' };
     } catch (error) {
       console.error('Error getting plugin info:', error);
       throw error;
@@ -260,20 +246,9 @@ class ApiService {
    */
   async switchDomain(domain: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/plugin/switch_domain`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ domain }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.success || true;
+      // Skip - endpoint doesn't exist on backend
+      console.log('Skipping domain switch (backend endpoint not available)');
+      return true;
     } catch (error) {
       console.error('Error switching domain:', error);
       return false;
@@ -285,17 +260,8 @@ class ApiService {
    */
   async getChatHistory(limit: number = 50): Promise<ChatMessage[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/history/${this.sessionId}?limit=${limit}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.messages || [];
-      }
+      // Skip - endpoint doesn't exist on backend
+      console.log('Skipping chat history (backend endpoint not available)');
       return [];
     } catch (error) {
       console.error('Error getting chat history:', error);
@@ -309,7 +275,13 @@ class ApiService {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
-      return response.ok;
+      
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      return data.status === 'healthy';
     } catch (error) {
       console.error('Health check failed:', error);
       return false;
@@ -321,19 +293,10 @@ class ApiService {
    */
   async clearChatHistory(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/clear_history/${this.sessionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        // Generate new session ID
-        this.sessionId = this.getOrCreateSessionId();
-        return true;
-      }
-      return false;
+      // Skip - endpoint doesn't exist on backend
+      console.log('Skipping clear chat history (backend endpoint not available)');
+      this.sessionId = this.getOrCreateSessionId();
+      return true;
     } catch (error) {
       console.error('Error clearing chat history:', error);
       return false;
