@@ -4,8 +4,8 @@ services:
     runtime: python
     plan: free
     rootDir: Backend
-    buildCommand: "pip install -r requirements.txt && pip install requests fastapi uvicorn python-multipart python-dotenv pymongo firebase-admin"
-    startCommand: "cd Backend && python api_server.py"
+    buildCommand: "pip install requests fastapi uvicorn python-multipart python-dotenv pymongo firebase-admin pyyaml joblib numpy"
+    startCommand: "python api_server.py"
     envVars:
       - key: OPENROUTER_API_KEY
         sync: false
