@@ -4,7 +4,9 @@ Redirect to the correct API server
 """
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import and run the correct server
 from api_server import app
