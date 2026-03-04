@@ -31,9 +31,31 @@ export default function ChatPanel() {
                 if (user?.uid) {
                     apiServiceRef.current.setUserId(user.uid);
                 }
+                // Now that API service is ready, check connection
+                checkBackendConnection();
             });
         }
     }, [user]);
+
+    const checkBackendConnection = async () => {
+        if (!apiServiceRef.current) {
+            console.log('API service not yet initialized, skipping health check');
+            return;
+        }
+        
+        try {
+            console.log('Checking backend connection...');
+            const isHealthy = await apiServiceRef.current.healthCheck();
+            console.log('Health check result:', isHealthy);
+            setIsConnected(isHealthy);
+            if (!isHealthy) {
+                setError("Unable to connect to backend. Please check your internet connection and try again.");
+            }
+        } catch (err) {
+            console.error('Connection check error:', err);
+            setError("Backend connection failed. Please try again later.");
+        }
+    };
 
     const prevPluginRef = useRef(activePlugin.id);
 
@@ -82,33 +104,6 @@ export default function ChatPanel() {
             console.error('Error loading session history:', error);
         }
     };
-    useEffect(() => {
-        const checkConnection = async () => {
-            if (!apiServiceRef.current) {
-                console.log('API service not yet initialized, skipping health check');
-                return;
-            }
-            
-            try {
-                console.log('Checking backend connection...');
-                const isHealthy = await apiServiceRef.current.healthCheck();
-                console.log('Health check result:', isHealthy);
-                setIsConnected(isHealthy);
-                if (!isHealthy) {
-                    setError("Unable to connect to backend. Please check your internet connection and try again.");
-                }
-            } catch (err) {
-                console.error('Connection check error:', err);
-                setError("Backend connection failed. Please try again later.");
-            }
-        };
-        
-        // Add a small delay to ensure API service is initialized
-        const timeoutId = setTimeout(checkConnection, 1000);
-        
-        return () => clearTimeout(timeoutId);
-    }, []);
-
     // Add welcome message when plugin changes
     useEffect(() => {
         if (prevPluginRef.current !== activePlugin.id) {
