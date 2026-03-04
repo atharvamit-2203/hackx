@@ -298,9 +298,7 @@ class ApiService {
       console.log('Health check attempting:', `${this.baseUrl}/health`);
       const response = await fetch(`${this.baseUrl}/health`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        mode: 'cors',
       });
       
       console.log('Health check response status:', response.status);
