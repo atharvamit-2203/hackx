@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlugin } from "@/context/PluginContext";
+import { useAuth } from "@/context/AuthContext";
 import { apiService, ChatMessage } from "@/lib/api";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
@@ -13,12 +14,22 @@ import { FileUpload } from "@/lib/fileUpload";
 
 export default function ChatPanel() {
     const { activePlugin, switchPlugin, plugins } = usePlugin();
+    const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<FileUpload[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [uploadedFiles, setUploadedFiles] = useState<FileUpload[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const apiServiceRef = useRef(apiService);
+
+    // Set user ID when user is available
+    useEffect(() => {
+        if (user?.uid) {
+            apiServiceRef.current.setUserId(user.uid);
+        }
+    }, [user]);
+
     const prevPluginRef = useRef(activePlugin.id);
 
     const scrollToBottom = useCallback(() => {
@@ -32,7 +43,40 @@ export default function ChatPanel() {
     // Removed auto-scroll on every message change to prevent automatic dragging
     // Users can now scroll freely through chat history
 
-    // Check API connection on mount
+    // Load session history if continuing a previous chat
+    useEffect(() => {
+        const sessionId = localStorage.getItem('currentSessionId');
+        if (sessionId) {
+            loadSessionHistory(sessionId);
+            // Clear the stored session ID after loading
+            localStorage.removeItem('currentSessionId');
+        }
+    }, []);
+
+    const loadSessionHistory = async (sessionId: string) => {
+        try {
+            const response = await fetch(`https://hackx-2.onrender.com/history/${sessionId}`);
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > 0) {
+                const historyMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+                    id: msg._id || `history-${Date.now()}-${Math.random()}`,
+                    text: msg.message,
+                    sender: msg.sender,
+                    timestamp: new Date(msg.timestamp),
+                    domain: msg.domain,
+                    confidence: msg.confidence,
+                    sources: msg.sources,
+                    methodology: msg.methodology,
+                    citations: msg.citations,
+                    disclaimer: msg.disclaimer
+                }));
+                setMessages(historyMessages);
+            }
+        } catch (error) {
+            console.error('Error loading session history:', error);
+        }
+    };
     useEffect(() => {
         const checkConnection = async () => {
             try {

@@ -1,5 +1,5 @@
 // API Service for Backend Integration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hackx-2.onrender.com';
 
 export interface ChatResponse {
   answer: string;
@@ -48,14 +48,29 @@ export interface ChatMessage {
 class ApiService {
   private baseUrl: string;
   private sessionId: string;
+  private userId: string | null = null;
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
-    // Generate or retrieve session ID (server-side simulation)
+  constructor() {
+    this.baseUrl = API_BASE_URL;
     this.sessionId = this.getOrCreateSessionId();
   }
 
   private getOrCreateSessionId(): string {
+    // Check if we're continuing a previous session
+    const storedSessionId = localStorage.getItem('currentSessionId');
+    if (storedSessionId) {
+      return storedSessionId;
+    }
+    
+    // Otherwise create a new session ID
+    return this.generateSessionId();
+  }
+
+  setUserId(userId: string) {
+    this.userId = userId;
+  }
+
+  private generateSessionId(): string {
     // For server-side rendering, use a simple session ID generation
     // In a real app, this would come from server session management
     if (typeof window !== 'undefined') {
@@ -157,7 +172,7 @@ class ApiService {
         },
         body: JSON.stringify({
           message: message,
-          user_id: 'frontend_user',
+          user_id: this.userId || 'frontend_user',
           session_id: this.sessionId,
           context: contextPrompt
         }),
