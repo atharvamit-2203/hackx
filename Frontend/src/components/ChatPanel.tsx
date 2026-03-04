@@ -50,10 +50,14 @@ export default function ChatPanel() {
             setIsConnected(isHealthy);
             if (!isHealthy) {
                 setError("Unable to connect to backend. Please check your internet connection and try again.");
+                // Retry after 3 seconds
+                setTimeout(checkBackendConnection, 3000);
             }
         } catch (err) {
             console.error('Connection check error:', err);
             setError("Backend connection failed. Please try again later.");
+            // Retry after 3 seconds
+            setTimeout(checkBackendConnection, 3000);
         }
     };
 
