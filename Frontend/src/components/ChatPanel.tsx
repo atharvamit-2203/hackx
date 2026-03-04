@@ -33,6 +33,44 @@ export default function ChatPanel() {
         messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
     }, []);
 
+    const checkBackendConnection = async () => {
+        if (!apiServiceRef.current) {
+            console.log('API service not yet initialized, skipping health check');
+            return;
+        }
+        
+        try {
+            console.log('Checking backend connection...');
+            const isHealthy = await apiServiceRef.current.healthCheck();
+            console.log('Health check result:', isHealthy);
+            setIsConnected(isHealthy);
+            if (!isHealthy) {
+                setError("Unable to connect to backend. Please check your internet connection and try again.");
+                // Retry after 3 seconds
+                setTimeout(checkBackendConnection, 3000);
+            }
+        } catch (err) {
+            console.error('Connection check error:', err);
+            setError("Backend connection failed. Please try again later.");
+            // Retry after 3 seconds
+            setTimeout(checkBackendConnection, 3000);
+        }
+    };
+
+    // Initialize API service only on client side
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            import('@/lib/api').then(({ apiService }) => {
+                apiServiceRef.current = apiService;
+                if (user?.uid) {
+                    apiServiceRef.current.setUserId(user.uid);
+                }
+                // Now that API service is ready, check connection
+                checkBackendConnection();
+            });
+        }
+    }, [checkBackendConnection]);
+
     // Removed auto-scroll on every message change to prevent automatic dragging
     // Users can now scroll freely through chat history
 

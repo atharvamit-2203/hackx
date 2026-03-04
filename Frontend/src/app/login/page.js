@@ -7,15 +7,15 @@ export default function LoginPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
 
+  // Auto-redirect to main page without requiring login
+  if (typeof window !== 'undefined') {
+    router.push('/');
+  }
+
   // Redirect if already logged in
   if (authUser) {
     router.push('/');
     return null;
-  }
-
-  // Auto-redirect to main page without requiring login
-  if (typeof window !== 'undefined') {
-    router.push('/');
   }
 
   return (

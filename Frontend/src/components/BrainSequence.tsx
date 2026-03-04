@@ -109,7 +109,7 @@ export default function BrainSequence() {
             window.removeEventListener("resize", handleResize);
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
-    }, [frameIndex, renderFrame]);
+    }, [frameIndex]);
 
     // Use opacity and scale transforms based on scroll to make it fade out smoothly towards the end
     const opacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 0.4, 0]);
