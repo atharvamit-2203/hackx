@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'export', // Disabled for client-side components
+  // No output: 'export' for Vercel - it handles SSR properly
   trailingSlash: true,
   images: {
     unoptimized: true
