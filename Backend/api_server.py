@@ -348,16 +348,8 @@ async def chat(request: ChatRequest):
                     "disclaimer": sme_response.disclaimer
                 }
             ))
-                {
-                    "domain": sme_response.domain.value,
-                    "confidence": sme_response.confidence,
-                    "sources": sme_response.sources,
-                    "methodology": sme_response.methodology,
-                    "citations": sme_response.citations,
-                    "disclaimer": sme_response.disclaimer
-                }
-            )
         
+        # Return response immediately (no delays)
         return ChatResponse(
             answer=sme_response.answer,
             confidence=sme_response.confidence,
@@ -365,7 +357,6 @@ async def chat(request: ChatRequest):
             methodology=sme_response.methodology,
             domain=sme_response.domain.value,
             citations=sme_response.citations,
-            reasoning_steps=sme_response.reasoning_steps,
             disclaimer=sme_response.disclaimer
         )
         
