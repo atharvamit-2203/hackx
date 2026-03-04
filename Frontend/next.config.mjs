@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // output: 'export', // Disabled for now to allow client-side rendering
   trailingSlash: true,
   images: {
     unoptimized: true
