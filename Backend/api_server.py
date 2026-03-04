@@ -245,15 +245,18 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Failed to initialize SME Plugin: {e}")
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return HealthResponse(
-        status="healthy",
-        plugin="SME Plugin API",
-        version="1.0.0",
-        mongodb_connected=mongo_client is not None
-    )
+    print(f"Health check accessed from: {request.headers.get('origin', 'unknown')}")
+    return {
+        "status": "healthy",
+        "plugin": "SME Plugin API",
+        "version": "1.0.1",
+        "mongodb_connected": mongo_client is not None,
+        "cors_enabled": True,
+        "timestamp": str(datetime.now())
+    }
 
 @app.get("/plugin/info")
 async def get_plugin_info():
