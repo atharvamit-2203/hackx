@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 
 const FRAME_COUNT = 240;
@@ -10,7 +10,17 @@ function currentFrame(index: number) {
     return `/brain/ezgif-frame-${String(index).padStart(3, "0")}.jpg`;
 }
 
-const renderFrame = (index: number, canvas: HTMLCanvasElement, images: HTMLImageElement[]) => {
+export default function BrainSequence() {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const imagesRef = useRef<HTMLImageElement[]>([]);
+
+    // Track complete page scroll
+    const { scrollYProgress } = useScroll();
+
+    // Map scroll 0-1 to frame 1-240
+    const frameIndex = useTransform(scrollYProgress, [0, 1], [1, FRAME_COUNT]);
+
+    const renderFrame = useCallback((index: number, canvas: HTMLCanvasElement, images: HTMLImageElement[]) => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -41,17 +51,7 @@ const renderFrame = (index: number, canvas: HTMLCanvasElement, images: HTMLImage
 
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         }
-    };
-
-export default function BrainSequence() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const imagesRef = useRef<HTMLImageElement[]>([]);
-
-    // Track complete page scroll
-    const { scrollYProgress } = useScroll();
-
-    // Map scroll 0-1 to frame 1-240
-    const frameIndex = useTransform(scrollYProgress, [0, 1], [1, FRAME_COUNT]);
+    }, []);
 
     useEffect(() => {
         // Preload images
@@ -109,7 +109,7 @@ export default function BrainSequence() {
             window.removeEventListener("resize", handleResize);
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
-    }, [frameIndex]);
+    }, [frameIndex, renderFrame]);
 
     // Use opacity and scale transforms based on scroll to make it fade out smoothly towards the end
     const opacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 0.4, 0]);
