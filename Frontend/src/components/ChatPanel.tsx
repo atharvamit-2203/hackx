@@ -23,44 +23,6 @@ export default function ChatPanel() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const apiServiceRef = useRef<any>(null);
 
-    // Initialize API service only on client side
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            import('@/lib/api').then(({ apiService }) => {
-                apiServiceRef.current = apiService;
-                if (user?.uid) {
-                    apiServiceRef.current.setUserId(user.uid);
-                }
-                // Now that API service is ready, check connection
-                checkBackendConnection();
-            });
-        }
-    }, [user]);
-
-    const checkBackendConnection = async () => {
-        if (!apiServiceRef.current) {
-            console.log('API service not yet initialized, skipping health check');
-            return;
-        }
-        
-        try {
-            console.log('Checking backend connection...');
-            const isHealthy = await apiServiceRef.current.healthCheck();
-            console.log('Health check result:', isHealthy);
-            setIsConnected(isHealthy);
-            if (!isHealthy) {
-                setError("Unable to connect to backend. Please check your internet connection and try again.");
-                // Retry after 3 seconds
-                setTimeout(checkBackendConnection, 3000);
-            }
-        } catch (err) {
-            console.error('Connection check error:', err);
-            setError("Backend connection failed. Please try again later.");
-            // Retry after 3 seconds
-            setTimeout(checkBackendConnection, 3000);
-        }
-    };
-
     const prevPluginRef = useRef(activePlugin.id);
 
     const scrollToBottom = useCallback(() => {

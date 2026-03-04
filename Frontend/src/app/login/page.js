@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -14,13 +13,10 @@ export default function LoginPage() {
     return null;
   }
 
-  const [loading, setLoading] = useState(false);
-
   // Auto-redirect to main page without requiring login
-  useEffect(() => {
-    // Simulate immediate login for demo
+  if (typeof window !== 'undefined') {
     router.push('/');
-  }, []);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
