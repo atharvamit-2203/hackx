@@ -271,7 +271,7 @@ export default function ChatPanel() {
                             </p>
                             {!isConnected && (
                                 <p className="text-yellow-400 text-sm max-w-sm mt-4">
-                                    ⚠️ Backend server is not running. Please start the backend to enable chat functionality.
+                                    ⚠️ Backend connection check failed, but chat will still work. Try sending a message!
                                 </p>
                             )}
                         </motion.div>
@@ -316,7 +316,7 @@ export default function ChatPanel() {
                 {/* File Upload */}
                 <FileUploadComponent
                     onFilesSelected={handleFilesSelected}
-                    disabled={!isConnected}
+                    disabled={false}
                 />
 
                 {/* Uploaded Files Display */}
@@ -336,7 +336,7 @@ export default function ChatPanel() {
                     </div>
                 )}
 
-                <ChatInput onSend={handleSend} disabled={!isConnected} />
+                <ChatInput onSend={handleSend} disabled={false} />
             </div>
         </div>
     );
