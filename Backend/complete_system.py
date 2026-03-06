@@ -439,45 +439,17 @@ class HotSwappableSMEPlugin:
     def _create_domain_prompt(self, query: str) -> str:
         """Create domain-specific system prompt"""
         domain_prompts = {
-            ExpertiseDomain.FINANCE: (
-                "You are a Financial Risk Analyst AI expert specializing in the Indian financial market. "
-                "Provide clear, comprehensive answers about Indian financial institutions, RBI regulations, SEBI guidelines, and Indian banking practices."
-            ),
-            ExpertiseDomain.BANKING: (
-                "You are a Banking Compliance Expert AI specializing in the Indian banking system. "
-                "Provide detailed analysis about Indian banks (SBI, HDFC, ICICI, etc.), RBI regulations, and Indian banking compliance."
-            ),
-            ExpertiseDomain.INVESTMENT: (
-                "You are an Investment Analyst AI expert specializing in the Indian stock market. "
-                "Provide thorough analysis of NSE, BSE, Indian stocks, mutual funds, SEBI regulations, and investment opportunities in India."
-            ),
-            ExpertiseDomain.RISK_MANAGEMENT: (
-                "You are a Risk Management Expert AI specializing in the Indian financial context. "
-                "Provide comprehensive risk analysis with mitigation strategies applicable to Indian markets and business environment."
-            ),
-            ExpertiseDomain.LEGAL: (
-                "You are a Senior Legal Advocate AI with expertise in Indian law. "
-                "Provide clear legal analysis with references to Indian statutes, landmark judgments, and practical procedural guidance. "
-                "Cite specific sections and case laws from the Indian legal system."
-            ),
-            ExpertiseDomain.CORPORATE_LAW: (
-                "You are a Corporate Law Expert AI specializing in Indian corporate law. "
-                "Provide detailed analysis with references to Companies Act 2013, SEBI regulations, MCA compliance, and Indian corporate governance."
-            ),
-            ExpertiseDomain.CONTRACT_LAW: (
-                "You are a Contract Law Expert AI specializing in Indian contract law. "
-                "Provide thorough analysis with references to Indian Contract Act 1872 and Indian judicial precedents."
-            ),
-            ExpertiseDomain.REGULATORY_COMPLIANCE: (
-                "You are a Regulatory Compliance Expert AI specializing in the Indian regulatory framework. "
-                "Provide comprehensive analysis with references to RBI, SEBI, MCA, and other Indian regulatory bodies."
-            )
+            ExpertiseDomain.FINANCE: "You are a Financial Risk Analyst focused on India.",
+            ExpertiseDomain.BANKING: "You are a Banking Expert focused on Indian banks and RBI.",
+            ExpertiseDomain.INVESTMENT: "You are an Investment Analyst focused on NSE/BSE and Indian stocks.",
+            ExpertiseDomain.RISK_MANAGEMENT: "You are a Risk Manager focused on Indian markets.",
+            ExpertiseDomain.LEGAL: "You are a Legal Advocate focused on Indian law.",
+            ExpertiseDomain.CORPORATE_LAW: "You are a Corporate Lawyer focused on Indian Companies Act.",
+            ExpertiseDomain.CONTRACT_LAW: "You are a Contract Lawyer focused on Indian Contract Act.",
+            ExpertiseDomain.REGULATORY_COMPLIANCE: "You are a Compliance Officer focused on Indian regulations."
         }
         
-        base_prompt = domain_prompts.get(self.domain, "You are a Financial Expert AI focused on India.")
-        base_prompt += " Include citations [1], [2], [3] after key claims. Focus on India."
-        
-        return base_prompt
+        return domain_prompts.get(self.domain, "You are an expert focused on India.")
     
     def detect_domain(self, query: str) -> ExpertiseDomain:
         """
@@ -582,10 +554,10 @@ class HotSwappableSMEPlugin:
         try:
             print(f"🔍 Making AI request...")
             
-            # Get clean domain-specific system prompt
-            system_prompt = self._create_domain_prompt("")
+            # Get minimal domain role
+            role = self._create_domain_prompt("")
             
-            # Simple, clean API call
+            # Ultra-clean API call
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
@@ -593,10 +565,10 @@ class HotSwappableSMEPlugin:
                     "model": "anthropic/claude-3-haiku",
                     "messages": [{
                         "role": "user", 
-                        "content": f"{system_prompt}\\n\\nQuestion: {prompt}"
+                        "content": f"{role} Answer concisely.\n\n{prompt}"
                     }],
-                    "max_tokens": 1500,
-                    "temperature": 0.7
+                    "max_tokens": 2000,
+                    "temperature": 0.4
                 },
                 timeout=30
             )
