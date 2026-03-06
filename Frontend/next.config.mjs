@@ -5,11 +5,24 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  webpack: (config) => {
+  // Ensure client components work properly
+  reactStrictMode: true,
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': './src'
     };
+    
+    // Externalize Firebase on server-side
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'firebase/app': 'commonjs firebase/app',
+        'firebase/auth': 'commonjs firebase/auth',
+        'firebase/database': 'commonjs firebase/database',
+      });
+    }
+    
     return config;
   }
 };
