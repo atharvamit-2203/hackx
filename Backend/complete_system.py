@@ -488,31 +488,8 @@ class HotSwappableSMEPlugin:
         
         base_prompt = domain_prompts.get(self.domain, "You are a Financial Expert AI.")
         
-        # Add decision tree logic
-        decision_tree = self._get_decision_tree("general")
-        base_prompt += f"\n\nFollow this reasoning process: {' → '.join(decision_tree)}"
-        
-        # Add source of truth
-        sources = self._get_source_references()
-        base_prompt += f"\n\nReference these authoritative sources: {', '.join(sources)}"
-        
-        # Add strict citation and formatting requirements
-        base_prompt += """
-
-CRITICAL FORMATTING REQUIREMENTS:
-1. ALWAYS include citations in [1], [2], [3] format after EVERY claim or fact
-2. Use clear paragraphs with proper line breaks for readability  
-3. Use bullet points for listing items
-4. Bold key terms when important
-5. End your response with a Sources section listing all citations
-6. ALL responses must be focused on INDIA - Indian laws, Indian banks, Indian regulations, Indian market
-
-Example: According to RBI regulations [1], loan approval in Indian banks requires CIBIL score assessment [2]. Key factors include income verification [3] and debt-to-income ratio as per Indian banking norms [1].
-
-Sources:
-[1] Reserve Bank of India (RBI) Guidelines
-[2] CIBIL Credit Information Standards
-[3] Indian Banking Regulations Act"""
+        # Simple, clear formatting instructions without examples
+        base_prompt += "\n\nIMPORTANT: Focus on INDIA (Indian laws, banks, regulations, market). Include citations [1], [2], [3] after claims. End with Sources section."
         
         return base_prompt
     
@@ -615,23 +592,17 @@ Sources:
             # Get clean domain-specific system prompt
             system_prompt = self._create_domain_prompt("")
             
-            # Combine system prompt and user query in a single message
-            # (Some APIs don't support separate system role)
-            full_prompt = f"""{system_prompt}
-
----
-
-User Question: {prompt}
-
-Provide your expert response following all the formatting requirements above."""
-            
-            # Direct API call with single user message
+            # Direct API call - system as first message, user query as second
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
                 json={
                     "model": "anthropic/claude-3-haiku",
-                    "messages": [{"role": "user", "content": full_prompt}],
+                    "messages": [
+                        {"role": "user", "content": system_prompt},
+                        {"role": "assistant", "content": "Understood. I will provide expert responses focused on India with proper citations."},
+                        {"role": "user", "content": prompt}
+                    ],
                     "max_tokens": 1500,
                     "temperature": 0.7
                 },
