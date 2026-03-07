@@ -361,114 +361,48 @@ async def chat_options():
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """Process a chat message using SME expertise with context"""
+    """Process a chat message using SME Plugin with domain detection and deduplication"""
     try:
-        print(f"🔍 Received message: {request.message[:100]}...")
+        logger.info(f"🔍 Received message: {request.message[:100]}...")
         
-        # Clean up repeated content
-        cleaned_message = request.message
-        if cleaned_message.count("Citizenship: The person must be a citizen of India") > 1:
-            # Remove repetitions - keep only first occurrence
-            lines = cleaned_message.split('\n')
-            seen_lines = set()
-            unique_lines = []
-            for line in lines:
-                if line.strip() and line.strip() not in seen_lines:
-                    seen_lines.add(line.strip())
-                    unique_lines.append(line)
-                elif not line.strip():  # Keep empty lines
-                    unique_lines.append(line)
-            cleaned_message = '\n'.join(unique_lines)
-            print(f"🧹 Cleaned message from {len(request.message)} to {len(cleaned_message)} chars")
+        # Detect domain from query
+        detected_domain_enum = sme_plugin.detect_domain(request.message)
+        logger.info(f"🎯 Detected domain: {detected_domain_enum.value}")
         
-        # Direct OpenRouter API call
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            print("❌ No API key found")
-            response_data = ChatResponse(
-                answer="API key not configured. Please check server configuration.",
-                confidence=0.0,
-                sources=[],
-                methodology="Direct API call",
-                domain="legal",
-                citations=[],
-                disclaimer="Server configuration error"
-            )
-            return JSONResponse(
-                content=response_data.dict(),
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*"
-                }
-            )
+        # Switch domain if different from current
+        if detected_domain_enum != sme_plugin.domain:
+            old_domain = sme_plugin.domain.value
+            sme_plugin.switch_domain(detected_domain_enum)
+            logger.info(f"🔄 Auto-switched from {old_domain} to {detected_domain_enum.value}")
         
-        print(f"🔑 Using API key: {api_key[:20]}...")
+        # Use SME Plugin (with all deduplication logic)
+        query_type = "loan_analysis" if "loan" in request.message.lower() else "general"
+        sme_response = sme_plugin.process_query(request.message, query_type)
         
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "anthropic/claude-3-haiku",
-                "messages": [{"role": "user", "content": cleaned_message}],
-                "max_tokens": 1000,
-                "temperature": 0.8  # Higher temperature for more variety
-            },
-            timeout=30
+        logger.info(f"✅ Generated response with {len(sme_response.citations)} citations")
+        
+        # Build response
+        response_data = ChatResponse(
+            answer=sme_response.answer,
+            confidence=sme_response.confidence,
+            sources=sme_response.sources,
+            methodology=sme_response.methodology,
+            domain=sme_response.domain.value,
+            citations=sme_response.citations,
+            disclaimer=sme_response.disclaimer
         )
         
-        print(f"📡 API Status: {response.status_code}")
-        
-        if response.status_code == 200:
-            result = response.json()
-            ai_answer = result['choices'][0]['message']['content']
-            print(f"✅ AI Response: {ai_answer[:100]}...")
-            
-            response_data = ChatResponse(
-                answer=ai_answer,  # Remove timestamp for cleaner responses
-                confidence=0.85,
-                sources=["OpenRouter API"],
-                methodology="Direct AI response",
-                domain="legal",
-                citations=[],
-                disclaimer="This is an AI-generated response. Please verify important information."
-            )
-            return JSONResponse(
-                content=response_data.dict(),
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*"
-                }
-            )
-        else:
-            print(f"❌ API Error: {response.status_code} - {response.text}")
-            response_data = ChatResponse(
-                answer=f"I'm having trouble connecting to my AI service right now. However, I can still help you with general guidance. What specific topic would you like to discuss?",
-                confidence=0.5,
-                sources=[],
-                methodology="Fallback response",
-                domain="legal",
-                citations=[],
-                disclaimer="AI service temporarily unavailable"
-            )
-            return JSONResponse(
-                content=response_data.dict(),
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*"
-                }
-            )
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
             
     except Exception as e:
-        print(f"❌ Chat endpoint error: {str(e)}")
-        print(f"❌ Error type: {type(e)}")
-        import traceback
-        print(f"❌ Full traceback: {traceback.format_exc()}")
+        logger.error(f"❌ Chat endpoint error: {str(e)}", exc_info=True)
         
         response_data = ChatResponse(
             answer=f"I'm experiencing technical difficulties, but I'm here to help. Please try again or let me know what topic you'd like to explore.",
