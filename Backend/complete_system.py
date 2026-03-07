@@ -585,30 +585,37 @@ class HotSwappableSMEPlugin:
                 
                 print(f"📝 Raw response length: {len(answer)} chars")
                 
-                # NUCLEAR DEDUPLICATION: Find where "1. " appears second time and cut there
+                # Advanced deduplication: detect repeating header patterns
                 lines = answer.split('\n')
-                first_one_idx = None
-                one_occurrences = []
                 
-                for i, line in enumerate(lines):
+                # Build signature of first 5-10 lines (the header pattern)
+                header_lines = []
+                for i, line in enumerate(lines[:15]):  # Check first 15 lines
                     stripped = line.strip()
-                    # Check if line starts with "1. " (beginning of numbered list)
-                    if stripped.startswith('1. '):
-                        one_occurrences.append(i)
-                        if first_one_idx is None:
-                            first_one_idx = i
-                            print(f"✓ First '1. ' found at line {i}: {stripped[:50]}")
-                        else:
-                            # Found second occurrence of "1. " - this is the repetition!
-                            print(f"⚠️ DUPLICATION DETECTED at line {i}: {stripped[:50]}")
-                            print(f"   Total '1. ' occurrences: {len(one_occurrences)}")
-                            # Keep only content before this line
-                            answer = '\n'.join(lines[:i]).strip()
-                            print(f"✂️ Truncated from {len(lines)} to {i} lines")
-                            break
+                    if stripped and (stripped[0].isdigit() or stripped.startswith('a.') or stripped.startswith('b.')):
+                        header_lines.append(stripped[:30])  # First 30 chars as signature
+                    if len(header_lines) >= 5:
+                        break
                 
-                if len(one_occurrences) > 1:
-                    print(f"⚠️ Found {len(one_occurrences)} occurrences of '1. ' at lines: {one_occurrences}")
+                if len(header_lines) >= 3:
+                    header_signature = '|||'.join(header_lines[:3])
+                    print(f"🔍 Header signature: {header_signature[:100]}")
+                    
+                    # Search for this pattern appearing again later
+                    for i in range(10, len(lines)):  # Start checking after line 10
+                        if i + len(header_lines) < len(lines):
+                            # Check if the same pattern appears here
+                            match_count = 0
+                            for j, sig in enumerate(header_lines[:3]):
+                                if i+j < len(lines) and lines[i+j].strip()[:30] == sig:
+                                    match_count += 1
+                            
+                            if match_count >= 2:  # At least 2 headers match
+                                print(f"⚠️ PATTERN REPETITION detected at line {i}")
+                                print(f"   Matching: {lines[i].strip()[:50]}")
+                                answer = '\n'.join(lines[:i]).strip()
+                                print(f"✂️ Truncated from {len(lines)} to {i} lines")
+                                break
                 
                 print(f"✅ Final response length: {len(answer)} chars")
                 return answer
