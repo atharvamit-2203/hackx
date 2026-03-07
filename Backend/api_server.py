@@ -402,9 +402,11 @@ async def chat(request: ChatRequest):
                     seen_nums.add(num)
                     unique_parts.append(part)
                 else:
-                    print(f"⚠️ Removing duplicate: {num}")
+                    print(f"⚠️ Removing duplicate: {num}. {part[:50]}...")
             else:
-                unique_parts.append(part)
+                # Only add non-numbered parts if they're at the beginning
+                if len(unique_parts) == 0:
+                    unique_parts.append(part)
         
         result.answer = '\n'.join(unique_parts).strip()
         print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(parts) - len(unique_parts)} duplicates")
