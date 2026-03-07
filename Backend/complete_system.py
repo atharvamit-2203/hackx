@@ -557,7 +557,7 @@ class HotSwappableSMEPlugin:
             # Get minimal domain role
             role = self._create_domain_prompt("")
             
-            # Explicit anti-duplication instructions
+            # Ultra-explicit format instruction
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
@@ -565,10 +565,10 @@ class HotSwappableSMEPlugin:
                     "model": "anthropic/claude-3-haiku",
                     "messages": [{
                         "role": "user", 
-                        "content": f"{role} Provide detailed explanations with examples. CRITICAL: Each numbered point should appear ONLY ONCE followed immediately by its full explanation. Do NOT repeat section headers or outlines multiple times.\n\n{prompt}"
+                        "content": f"{role}\n\nFORMAT RULE: When listing points, write each point ONCE with its full explanation immediately below. NEVER repeat the list of points between explanations.\n\nCorrect format:\n1. Point A: [full explanation]\n2. Point B: [full explanation]\n\nWRONG format (DO NOT DO THIS):\n1. Point A\n2. Point B\n[explanation A]\n1. Point A\n2. Point B\n[explanation B]\n\n{prompt}"
                     }],
                     "max_tokens": 2500,
-                    "temperature": 0.4
+                    "temperature": 0.3
                 },
                 timeout=30
             )
