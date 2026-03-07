@@ -444,86 +444,97 @@ async def chat_basic(request: dict):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """Process a chat message using SME Plugin with domain detection and deduplication"""
+    """Process a chat message using SME expertise with context"""
+    print(f"🔍 Received message: {request.message[:50]}...")
+    
+    if not sme_plugin:
+        return ChatResponse(
+            answer="Backend service not properly initialized. Please try again.",
+            confidence=0.0,
+            sources=[],
+            methodology="Error",
+            domain="finance",
+            citations=[],
+            reasoning_steps=[],
+            disclaimer="Server configuration error"
+        )
+    
     try:
-        logger.info(f"🔍 Received message: {request.message[:100]}...")
+        # Step 1: Detect the appropriate domain
+        detected_domain = sme_plugin.detect_domain(request.message)
+        print(f"🎯 Detected domain: {detected_domain.value}")
         
-        # Check if SME plugin is available
-        if sme_plugin is None:
-            logger.warning("❌ SME Plugin not initialized, using fallback")
-            response_data = ChatResponse(
-                answer="I'm ready to help! Please let me know what you'd like to discuss.",
-                confidence=0.7,
-                sources=["Fallback response"],
-                methodology="Direct response",
-                domain="general",
-                citations=[],
-                disclaimer="SME Plugin temporarily unavailable"
-            )
-            return JSONResponse(
-                content=response_data.dict(),
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*"
-                }
-            )
+        # Step 2: Switch plugin to detected domain
+        sme_plugin.domain = detected_domain
         
-        # Detect domain from query
-        detected_domain_enum = sme_plugin.detect_domain(request.message)
-        logger.info(f"🎯 Detected domain: {detected_domain_enum.value}")
-        
-        # Switch domain if different from current
-        if detected_domain_enum != sme_plugin.domain:
-            old_domain = sme_plugin.domain.value
-            sme_plugin.switch_domain(detected_domain_enum)
-            logger.info(f"🔄 Auto-switched from {old_domain} to {detected_domain_enum.value}")
-        
-        # Use SME Plugin (with all deduplication logic)
-        query_type = "loan_analysis" if "loan" in request.message.lower() else "general"
-        sme_response = sme_plugin.process_query(request.message, query_type)
-        
-        logger.info(f"✅ Generated response with {len(sme_response.citations)} citations")
-        
-        # Build response
-        response_data = ChatResponse(
-            answer=sme_response.answer,
-            confidence=sme_response.confidence,
-            sources=sme_response.sources,
-            methodology=sme_response.methodology,
-            domain=sme_response.domain.value,
-            citations=sme_response.citations,
-            disclaimer=sme_response.disclaimer
+        # Step 3: Process query with full SME capabilities
+        result = sme_plugin.process_query(
+            query=request.message,
+            query_type="general",
+            context=request.context
         )
         
-        return JSONResponse(
-            content=response_data.dict(),
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
+        # CRITICAL: Remove duplicates at API level as final safeguard
+        import re
+        answer = result.answer
+        
+        print(f"🔍 Original answer length: {len(answer)} chars")
+        
+        # Split by numbered points and keep only first occurrence
+        parts = re.split(r'\n(?=\d+\.\s)', '\n' + answer)
+        print(f"🔍 Split into {len(parts)} parts")
+        
+        seen_nums = set()
+        unique_parts = []
+        
+        for part in parts:
+            if not part.strip():
+                continue
+            match = re.match(r'(\d+)\.\s', part)
+            if match:
+                num = match.group(1)
+                if num not in seen_nums:
+                    seen_nums.add(num)
+                    unique_parts.append(part)
+                else:
+                    print(f"⚠️ Removing duplicate: {num}. {part[:50]}...")
+            else:
+                # Only add non-numbered parts if they're at the beginning
+                if len(unique_parts) == 0:
+                    unique_parts.append(part)
+        
+        result.answer = '\n'.join(unique_parts).strip()
+        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(parts) - len(unique_parts)} duplicates")
+        
+        print(f"✅ Generated response with {len(result.citations)} citations")
+        print(f"📚 Citations: {result.citations}")
+
+        # Return structured response with proper domain and citations
+        return ChatResponse(
+            answer=result.answer,
+            confidence=result.confidence,
+            sources=result.sources,
+            methodology=result.methodology,
+            domain=result.domain.value,
+            citations=result.citations,
+            reasoning_steps=result.reasoning_steps,
+            disclaimer=result.disclaimer
         )
             
     except Exception as e:
-        logger.error(f"❌ Chat endpoint error: {str(e)}", exc_info=True)
-         
-        response_data = ChatResponse(
-            answer=f"I'm experiencing technical difficulties, but I'm here to help. Please try again or let me know what topic you'd like to explore.",
+        print(f"❌ Error processing query: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return ChatResponse(
+            answer=f"I'm experiencing technical difficulties. Please try rephrasing your question or try again.",
             confidence=0.3,
             sources=[],
             methodology="Error handling",
-            domain="general",
+            domain="finance",
             citations=[],
+            reasoning_steps=[],
             disclaimer="Service temporarily unavailable"
-        )
-        return JSONResponse(
-            content=response_data.dict(),
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
         )
 
 @app.get("/context/{session_id}")

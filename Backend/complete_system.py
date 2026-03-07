@@ -439,17 +439,60 @@ class HotSwappableSMEPlugin:
     def _create_domain_prompt(self, query: str) -> str:
         """Create domain-specific system prompt"""
         domain_prompts = {
-            ExpertiseDomain.FINANCE: "You are a Financial Risk Analyst focused on India (RBI, SEBI, Indian banking system).",
-            ExpertiseDomain.BANKING: "You are a Banking Expert focused on Indian banks, RBI regulations, and Indian banking practices.",
-            ExpertiseDomain.INVESTMENT: "You are an Investment Analyst focused on NSE/BSE, Indian stocks, and SEBI regulations.",
-            ExpertiseDomain.RISK_MANAGEMENT: "You are a Risk Manager focused on Indian markets and RBI risk guidelines.",
-            ExpertiseDomain.LEGAL: "You are a Legal Advocate focused on Indian law (IPC, CPC, Constitution of India).",
-            ExpertiseDomain.CORPORATE_LAW: "You are a Corporate Lawyer focused on Indian Companies Act and SEBI regulations.",
-            ExpertiseDomain.CONTRACT_LAW: "You are a Contract Lawyer focused on Indian Contract Act 1872.",
-            ExpertiseDomain.REGULATORY_COMPLIANCE: "You are a Compliance Officer focused on Indian regulations (RBI, SEBI, MCA)."
+            ExpertiseDomain.FINANCE: (
+                "You are a Financial Risk Analyst AI expert. Think like a seasoned financial professional. "
+                "Provide comprehensive, detailed answers with proper citations. "
+                "Use structured reasoning and follow financial best practices."
+            ),
+            ExpertiseDomain.BANKING: (
+                "You are a Banking Compliance Expert AI. Think like a senior banking professional. "
+                "Provide detailed analysis with regulatory references and compliance considerations."
+            ),
+            ExpertiseDomain.INVESTMENT: (
+                "You are an Investment Analyst AI expert. Think like a certified financial analyst. "
+                "Provide thorough investment analysis with market insights and risk assessments."
+            ),
+            ExpertiseDomain.RISK_MANAGEMENT: (
+                "You are a Risk Management Expert AI. Think like a certified risk manager. "
+                "Provide comprehensive risk analysis with mitigation strategies and controls."
+            ),
+            ExpertiseDomain.LEGAL: (
+                "You are a Senior Legal Advocate AI with deep expertise in Indian law, including criminal law, civil law, and cyber law. "
+                "Think like an experienced Indian lawyer practicing in High Courts with 15+ years of experience. "
+                "Provide comprehensive legal analysis with specific references to Indian statutes, landmark judgments, and procedural requirements. "
+                "For defamation cases, reference Section 499/500 of IPC, Information Technology Act, and relevant Supreme Court precedents. "
+                "Include practical steps for filing FIR, civil suit, evidence collection, and jurisdiction considerations. "
+                "Use structured legal reasoning: Issue → Relevant Law → Application → Conclusion → Practical Advice. "
+                "Always cite specific sections, case laws, and procedural requirements under Indian legal system."
+            ),
+            ExpertiseDomain.CORPORATE_LAW: (
+                "You are a Corporate Law Expert AI specializing in Indian corporate law. Think like a senior corporate lawyer. "
+                "Provide detailed corporate law analysis with references to Companies Act 2013 and other relevant statutes."
+            ),
+            ExpertiseDomain.CONTRACT_LAW: (
+                "You are a Contract Law Expert AI specializing in Indian contract law. Think like an experienced contract lawyer. "
+                "Provide thorough contract analysis with references to Indian Contract Act 1872 and related legislation."
+            ),
+            ExpertiseDomain.REGULATORY_COMPLIANCE: (
+                "You are a Regulatory Compliance Expert AI. Think like a senior compliance officer. "
+                "Provide comprehensive compliance analysis with references to applicable regulations and standards."
+            )
         }
         
-        return domain_prompts.get(self.domain, "You are an expert focused on India.")
+        base_prompt = domain_prompts.get(self.domain, "You are a Financial Expert AI.")
+        
+        # Add decision tree logic
+        decision_tree = self._get_decision_tree("general")
+        base_prompt += f"\n\nFollow this reasoning process: {' → '.join(decision_tree)}"
+        
+        # Add source of truth
+        sources = self._get_source_references()
+        base_prompt += f"\n\nReference these authoritative sources: {', '.join(sources)}"
+        
+        # Add citation requirement
+        base_prompt += "\n\nCRITICAL: Include proper citations [1], [2], [3] in your response."
+        
+        return base_prompt
     
     def detect_domain(self, query: str) -> ExpertiseDomain:
         """
@@ -476,10 +519,7 @@ class HotSwappableSMEPlugin:
             'statutory', 'regulatory', 'compliance', 'legal framework', 'legal system',
             'judicial', 'legislative', 'executive', 'legal precedent', 'legal principle',
             'legal doctrine', 'legal interpretation', 'legal obligation', 'legal liability',
-            'legal advice', 'legal opinion', 'legal counsel', 'legal document',
-            'defamation', 'slander', 'libel', 'defame', 'fir', 'police complaint',
-            'ipc', 'section', 'penal code', 'cyber crime', 'cybercrime', 'harassment',
-            'rights', 'legal action', 'advocate', 'petition', 'writ', 'bail', 'arrest'
+            'legal advice', 'legal opinion', 'legal counsel', 'legal document'
         ]
         
         # Finance keywords - lower priority
@@ -501,11 +541,7 @@ class HotSwappableSMEPlugin:
         logger.info(f"Query: {query_lower}")
         
         # Priority 1: Explicit legal terms (highest weight)
-        explicit_legal_terms = [
-            'preamble', 'constitution', 'statute', 'act', 'code', 'court', 'judge', 
-            'lawyer', 'attorney', 'lawsuit', 'defamation', 'slander', 'libel', 
-            'fir', 'ipc', 'section', 'penal code', 'advocate', 'petition', 'writ'
-        ]
+        explicit_legal_terms = ['preamble', 'constitution', 'statute', 'act', 'code', 'court', 'judge', 'lawyer', 'attorney', 'lawsuit']
         if any(term in query_lower for term in explicit_legal_terms):
             logger.info("Detected explicit legal terms - returning LEGAL domain")
             return ExpertiseDomain.LEGAL
@@ -550,82 +586,34 @@ class HotSwappableSMEPlugin:
                 return ExpertiseDomain.FINANCE
     
     def _query_llm(self, prompt: str) -> str:
-        """Query the LLM API with domain-specific system prompt"""
+        """Query the LLM API"""
+        data = {
+            "model": "anthropic/claude-3-haiku",
+            "messages": [
+                {"role": "system", "content": self._create_domain_prompt("")},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.7
+        }
+        
         try:
-            logger.info(f"🔍 Making AI request...")
-            
-            # Get minimal domain role
-            role = self._create_domain_prompt("")
-            
-            # Direct, simple instruction
-            response = requests.post(
-                self.api_url,
-                headers=self.headers,
-                json={
-                    "model": "anthropic/claude-3-haiku",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": f"{role} Answer thoroughly with detailed explanations."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "max_tokens": 4000,
-                    "temperature": 0.2
-                },
-                timeout=30
-            )
+            print(f"🔍 Querying LLM with prompt: {prompt[:100]}...")
+            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=30)
+            print(f"📡 API Response Status: {response.status_code}")
             
             if response.status_code == 200:
                 result = response.json()
-                answer = result['choices'][0]['message']['content'].strip()
-                
-                logger.info(f"📝 Raw response length: {len(answer)} chars")
-                
-                # Advanced deduplication: detect repeating header patterns
-                lines = answer.split('\n')
-                
-                # Build signature of first 5-10 lines (the header pattern)
-                header_lines = []
-                for i, line in enumerate(lines[:15]):  # Check first 15 lines
-                    stripped = line.strip()
-                    if stripped and (stripped[0].isdigit() or stripped.startswith('a.') or stripped.startswith('b.')):
-                        header_lines.append(stripped[:30])  # First 30 chars as signature
-                    if len(header_lines) >= 5:
-                        break
-                
-                if len(header_lines) >= 3:
-                    header_signature = '|||'.join(header_lines[:3])
-                    logger.info(f"🔍 Header signature: {header_signature[:100]}")
-                    
-                    # Search for this pattern appearing again later
-                    for i in range(10, len(lines)):  # Start checking after line 10
-                        if i + len(header_lines) < len(lines):
-                            # Check if the same pattern appears here
-                            match_count = 0
-                            for j, sig in enumerate(header_lines[:3]):
-                                if i+j < len(lines) and lines[i+j].strip()[:30] == sig:
-                                    match_count += 1
-                            
-                            if match_count >= 2:  # At least 2 headers match
-                                logger.warning(f"⚠️ PATTERN REPETITION detected at line {i}")
-                                logger.info(f"   Matching: {lines[i].strip()[:50]}")
-                                answer = '\n'.join(lines[:i]).strip()
-                                logger.info(f"✂️ Truncated from {len(lines)} to {i} lines")
-                                break
-                
-                logger.info(f"✅ Final response length: {len(answer)} chars")
+                answer = result['choices'][0]['message']['content']
+                print(f"✅ LLM Response: {answer[:100]}...")
                 return answer
             else:
-                logger.error(f"❌ API failed: {response.status_code}")
-                return "I'm here to help. Could you please provide more details about what you'd like to know?"
-                
+                print(f"❌ API Error: {response.status_code}")
+                print(f"❌ Response Text: {response.text}")
+                return f"I apologize, but I'm experiencing technical difficulties with the AI service. Please try again later. (Error: {response.status_code})"
         except Exception as e:
-            logger.error(f"❌ Error in _query_llm: {e}", exc_info=True)
-            return "I'm ready to assist you. What specific topic would you like help with today?"
+            print(f"❌ Query Error: {e}")
+            return f"I apologize, but I'm experiencing technical difficulties. Please try again later. (Error: {str(e)})"
     
     def _extract_citations(self, response: str) -> List[str]:
         """Extract citations from response"""
@@ -830,8 +818,29 @@ class HotSwappableSMEPlugin:
     def _handle_factual_question(self, query: str, query_type: str, context: str = "") -> SMEResponse:
         """Handle factual questions with comprehensive expert response"""
         
-        # Pass only the actual query to LLM - system prompt has all instructions
-        llm_response = self._query_llm(query)
+        # Create comprehensive prompt
+        prompt = f"""{query}
+
+        Provide a comprehensive, detailed response that:
+        1. Demonstrates deep domain expertise
+        2. Includes specific examples and applications
+        3. References authoritative sources
+        4. Follows structured reasoning
+        5. Provides actionable insights
+        6. If appropriate, asks follow-up questions for deeper understanding
+
+        CRITICAL SAFETY INSTRUCTIONS:
+        - DO NOT hallucinate facts, figures, or data
+        - ONLY provide information you are confident about
+        - If uncertain about specific details, clearly state limitations
+        - Cite sources when making claims
+        - Avoid making up statistics or specific numbers
+
+        Query Type: {query_type}
+        Domain: {self.domain.value}"""
+        
+        # Get LLM response
+        llm_response = self._query_llm(prompt)
         
         # Extract citations
         citations = self._extract_citations(llm_response)
