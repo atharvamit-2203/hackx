@@ -384,8 +384,12 @@ async def chat(request: ChatRequest):
         import re
         answer = result.answer
         
+        print(f"🔍 Original answer length: {len(answer)} chars")
+        
         # Split by numbered points and keep only first occurrence
         parts = re.split(r'\n(?=\d+\.\s)', '\n' + answer)
+        print(f"🔍 Split into {len(parts)} parts")
+        
         seen_nums = set()
         unique_parts = []
         
@@ -398,10 +402,13 @@ async def chat(request: ChatRequest):
                 if num not in seen_nums:
                     seen_nums.add(num)
                     unique_parts.append(part)
+                else:
+                    print(f"⚠️ Removing duplicate: {num}")
             else:
                 unique_parts.append(part)
         
         result.answer = '\n'.join(unique_parts).strip()
+        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(parts) - len(unique_parts)} duplicates")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
