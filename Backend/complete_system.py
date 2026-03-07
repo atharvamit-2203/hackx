@@ -583,37 +583,31 @@ class HotSwappableSMEPlugin:
                 result = response.json()
                 answer = result['choices'][0]['message']['content']
                 
-                # ULTRA-AGGRESSIVE: Remove duplicate numbered sections
+                # NUCLEAR OPTION: Split by numbered points and keep only first occurrence
                 import re
                 
-                # Find all numbered sections (1. ... 2. ... etc)
-                pattern = r'(\d+\.\s+[^\n]+(?:\n(?!\d+\.)[^\n]+)*)'  
-                matches = re.findall(pattern, answer)
+                # Split by pattern: number followed by dot and space at start of line
+                parts = re.split(r'\n(?=\d+\.\s)', '\n' + answer)
                 
-                # Track unique content by normalized text
-                seen = set()
-                unique_matches = []
+                seen_content = {}
+                final_answer = []
                 
-                for match in matches:
-                    # Normalize: remove numbers, extra spaces
-                    normalized = re.sub(r'^\d+\.\s+', '', match).strip()
-                    normalized = ' '.join(normalized.split())
+                for part in parts:
+                    if not part.strip():
+                        continue
                     
-                    if normalized not in seen and len(normalized) > 20:
-                        seen.add(normalized)
-                        unique_matches.append(match)
+                    # Extract the number
+                    match = re.match(r'(\d+)\.\s', part)
+                    if match:
+                        num = match.group(1)
+                        # Only keep first occurrence of each number
+                        if num not in seen_content:
+                            seen_content[num] = part
+                            final_answer.append(part)
                 
-                # Rebuild answer with unique sections only
-                if unique_matches:
-                    answer = '\n\n'.join(unique_matches)
-                    
-                    # Add references section if exists
-                    refs_match = re.search(r'(\[\d+\][^\[]+(?:\[\d+\][^\[]+)*$)', result['choices'][0]['message']['content'], re.MULTILINE | re.DOTALL)
-                    if refs_match:
-                        answer += '\n\n' + refs_match.group(1)
-                
-                removed = len(matches) - len(unique_matches)
-                print(f"✅ AI responded (removed {removed} duplicate sections)")
+                answer = '\n'.join(final_answer).strip()
+                removed = len(parts) - len(final_answer) - 1
+                print(f"✅ AI responded (removed {removed} duplicate numbered sections)")
                 return answer
             else:
                 print(f"❌ API failed: {response.status_code}")
