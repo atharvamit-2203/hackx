@@ -557,7 +557,7 @@ class HotSwappableSMEPlugin:
             # Get minimal domain role
             role = self._create_domain_prompt("")
             
-            # Simplified approach with system message
+            # Single-shot request with high token limit to prevent cutoff loops
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
@@ -566,48 +566,52 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} You are an expert in INDIAN LAW. List each point ONCE with brief explanation and citation. Format: 1. Title - Brief description [1]. Stop after listing all unique points. DO NOT REPEAT."
+                            "content": f"{role} Provide comprehensive answers with detailed explanations. Write naturally without repetition."
                         },
                         {
                             "role": "user",
                             "content": prompt
                         }
                     ],
-                    "max_tokens": 400,
-                    "temperature": 0.2
+                    "max_tokens": 4000,
+                    "temperature": 0.2,
+                    "stop": ["</response>", "\n\n---\n\n"]
                 },
                 timeout=30
             )
             
             if response.status_code == 200:
                 result = response.json()
-                answer = result['choices'][0]['message']['content']
+                answer = result['choices'][0]['message']['content'].strip()
                 
-                # NUCLEAR OPTION: Split by numbered points and keep only first occurrence
-                import re
+                # Post-process: detect and remove duplicate blocks
+                # If content repeats after a blank line, truncate
+                lines = answer.split('\n')
+                deduped_lines = []
+                seen_blocks = set()
+                current_block = []
                 
-                # Split by pattern: number followed by dot and space at start of line
-                parts = re.split(r'\n(?=\d+\.\s)', '\n' + answer)
+                for line in lines:
+                    if line.strip() == '':
+                        # End of block
+                        if current_block:
+                            block_text = ' '.join(current_block)
+                            if block_text not in seen_blocks:
+                                seen_blocks.add(block_text)
+                                deduped_lines.extend(current_block)
+                                deduped_lines.append('')
+                            current_block = []
+                    else:
+                        current_block.append(line)
                 
-                seen_content = {}
-                final_answer = []
+                # Add final block
+                if current_block:
+                    block_text = ' '.join(current_block)
+                    if block_text not in seen_blocks:
+                        deduped_lines.extend(current_block)
                 
-                for part in parts:
-                    if not part.strip():
-                        continue
-                    
-                    # Extract the number
-                    match = re.match(r'(\d+)\.\s', part)
-                    if match:
-                        num = match.group(1)
-                        # Only keep first occurrence of each number
-                        if num not in seen_content:
-                            seen_content[num] = part
-                            final_answer.append(part)
-                
-                answer = '\n'.join(final_answer).strip()
-                removed = len(parts) - len(final_answer) - 1
-                print(f"✅ AI responded (removed {removed} duplicate numbered sections)")
+                answer = '\n'.join(deduped_lines).strip()
+                print(f"✅ AI responded (deduplicated)")
                 return answer
             else:
                 print(f"❌ API failed: {response.status_code}")
