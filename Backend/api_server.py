@@ -5,6 +5,7 @@ REST API for Frontend Integration with MongoDB Chat History
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import uvicorn
@@ -384,7 +385,7 @@ async def chat(request: ChatRequest):
         # Direct OpenRouter API call
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            return ChatResponse(
+            response_data = ChatResponse(
                 answer="API key not configured. Please check server configuration.",
                 confidence=0.0,
                 sources=[],
@@ -392,6 +393,14 @@ async def chat(request: ChatRequest):
                 domain="legal",
                 citations=[],
                 disclaimer="Server configuration error"
+            )
+            return JSONResponse(
+                content=response_data.dict(),
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*"
+                }
             )
         
         print(f"🔑 Using API key: {api_key[:20]}...")
@@ -418,10 +427,7 @@ async def chat(request: ChatRequest):
             ai_answer = result['choices'][0]['message']['content']
             print(f"✅ AI Response: {ai_answer[:100]}...")
             
-            # Add timestamp to ensure fresh responses
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            
-            return ChatResponse(
+            response_data = ChatResponse(
                 answer=ai_answer,  # Remove timestamp for cleaner responses
                 confidence=0.85,
                 sources=["OpenRouter API"],
@@ -430,9 +436,17 @@ async def chat(request: ChatRequest):
                 citations=[],
                 disclaimer="This is an AI-generated response. Please verify important information."
             )
+            return JSONResponse(
+                content=response_data.dict(),
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*"
+                }
+            )
         else:
             print(f"❌ API Error: {response.status_code} - {response.text}")
-            return ChatResponse(
+            response_data = ChatResponse(
                 answer=f"I'm having trouble connecting to my AI service right now. However, I can still help you with general guidance. What specific topic would you like to discuss?",
                 confidence=0.5,
                 sources=[],
@@ -441,10 +455,18 @@ async def chat(request: ChatRequest):
                 citations=[],
                 disclaimer="AI service temporarily unavailable"
             )
+            return JSONResponse(
+                content=response_data.dict(),
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*"
+                }
+            )
             
     except Exception as e:
         print(f"❌ Error: {e}")
-        return ChatResponse(
+        response_data = ChatResponse(
             answer=f"I'm experiencing technical difficulties, but I'm here to help. Please try again or let me know what topic you'd like to explore.",
             confidence=0.3,
             sources=[],
@@ -452,6 +474,14 @@ async def chat(request: ChatRequest):
             domain="legal",
             citations=[],
             disclaimer="Service temporarily unavailable"
+        )
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
         )
 
 @app.get("/context/{session_id}")
