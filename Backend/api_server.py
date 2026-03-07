@@ -478,28 +478,25 @@ async def chat(request: ChatRequest):
         answer = result.answer
         print(f"🔍 Original answer length: {len(answer)} chars")
         
-        # Split by section headers and track content
-        import re
-        sections = re.split(r'\n(?=[A-Z][a-z]+:)', answer)  # Split on section headers
+        # Split into paragraphs and remove duplicates
+        paragraphs = answer.split('\n\n')
+        seen = set()
+        unique = []
         
-        seen_content = set()
-        unique_sections = []
-        
-        for section in sections:
-            # Extract just the content (remove section header for comparison)
-            content_lines = [line for line in section.split('\n') if line.strip() and not line.strip().endswith(':')]
-            content_normalized = ' '.join(' '.join(line.lower().split()) for line in content_lines)
+        for para in paragraphs:
+            # Normalize: remove numbers, punctuation, extra spaces for comparison
+            normalized = re.sub(r'[\d\[\]\(\)\.,:;!?-]', '', para.lower())
+            normalized = ' '.join(normalized.split())
             
-            # Skip if we've seen this content before
-            if content_normalized and content_normalized in seen_content:
-                print(f"⚠️ Skipping duplicate section: {section[:50]}...")
+            # Skip if too short or already seen
+            if len(normalized) < 20 or normalized in seen:
+                print(f"⚠️ Skipping duplicate: {para[:40]}...")
                 continue
             
-            if content_normalized:
-                seen_content.add(content_normalized)
-            unique_sections.append(section)
+            seen.add(normalized)
+            unique.append(para)
         
-        result.answer = '\n'.join(unique_sections)
+        result.answer = '\n\n'.join(unique)
         
         # Step 4: Add citations section if not present
         if result.citations and '[1]' not in result.answer:
@@ -508,7 +505,7 @@ async def chat(request: ChatRequest):
                 citations_text += f'[{i}] {citation}\n'
             result.answer += citations_text
         
-        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(sections) - len(unique_sections)} duplicate sections")
+        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(paragraphs) - len(unique)} duplicates")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
