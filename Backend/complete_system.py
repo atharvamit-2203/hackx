@@ -566,14 +566,14 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} CRITICAL: Write each point ONLY ONCE. Format: 1. Title - Definition. Characteristics. Example. Then move to point 2. NEVER repeat headings or restate points. Be direct and concise."
+                            "content": f"{role} Write response ONCE. List each point with number, dash, description. Add [1][2][3] citations. Example: 1. Topic - Description [1]. NO REPETITION."
                         },
                         {
                             "role": "user",
                             "content": prompt
                         }
                     ],
-                    "max_tokens": 800,
+                    "max_tokens": 600,
                     "temperature": 0.2
                 },
                 timeout=30
