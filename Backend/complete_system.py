@@ -583,25 +583,34 @@ class HotSwappableSMEPlugin:
                 result = response.json()
                 answer = result['choices'][0]['message']['content'].strip()
                 
+                print(f"📝 Raw response length: {len(answer)} chars")
+                
                 # NUCLEAR DEDUPLICATION: Find where "1. " appears second time and cut there
                 lines = answer.split('\n')
                 first_one_idx = None
+                one_occurrences = []
                 
                 for i, line in enumerate(lines):
                     stripped = line.strip()
                     # Check if line starts with "1. " (beginning of numbered list)
-                    if stripped.startswith('1. ') and len(stripped) > 3:
+                    if stripped.startswith('1. '):
+                        one_occurrences.append(i)
                         if first_one_idx is None:
                             first_one_idx = i
-                            print(f"✓ First '1. ' found at line {i}")
+                            print(f"✓ First '1. ' found at line {i}: {stripped[:50]}")
                         else:
                             # Found second occurrence of "1. " - this is the repetition!
-                            print(f"⚠️ DUPLICATION DETECTED: Second '1. ' at line {i}, truncating")
+                            print(f"⚠️ DUPLICATION DETECTED at line {i}: {stripped[:50]}")
+                            print(f"   Total '1. ' occurrences: {len(one_occurrences)}")
                             # Keep only content before this line
                             answer = '\n'.join(lines[:i]).strip()
+                            print(f"✂️ Truncated from {len(lines)} to {i} lines")
                             break
                 
-                print(f"✅ AI responded (checked for duplication)")
+                if len(one_occurrences) > 1:
+                    print(f"⚠️ Found {len(one_occurrences)} occurrences of '1. ' at lines: {one_occurrences}")
+                
+                print(f"✅ Final response length: {len(answer)} chars")
                 return answer
             else:
                 print(f"❌ API failed: {response.status_code}")
