@@ -566,7 +566,7 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} Provide detailed explanations for each point. Include definition, characteristics, and examples. Add citations [1][2][3]. Write each point ONCE only."
+                            "content": f"{role} You are an expert in INDIAN LAW. Provide detailed explanations for each point with Indian legal context, statutes, and case law. Include definition, characteristics, and Indian examples. Add citations to Indian laws [1][2][3]. Write complete response in ONE block - do NOT repeat any content."
                         },
                         {
                             "role": "user",
@@ -583,25 +583,37 @@ class HotSwappableSMEPlugin:
                 result = response.json()
                 answer = result['choices'][0]['message']['content']
                 
-                # CRITICAL: Remove ALL duplicate blocks
-                import hashlib
+                # ULTRA-AGGRESSIVE: Remove duplicate numbered sections
+                import re
                 
-                # Split into sections by double newline
-                sections = answer.split('\n\n')
-                seen_hashes = set()
-                unique_sections = []
+                # Find all numbered sections (1. ... 2. ... etc)
+                pattern = r'(\d+\.\s+[^\n]+(?:\n(?!\d+\.)[^\n]+)*)'  
+                matches = re.findall(pattern, answer)
                 
-                for section in sections:
-                    # Create hash of normalized content (ignore whitespace differences)
-                    normalized = ' '.join(section.split())
-                    section_hash = hashlib.md5(normalized.encode()).hexdigest()
+                # Track unique content by normalized text
+                seen = set()
+                unique_matches = []
+                
+                for match in matches:
+                    # Normalize: remove numbers, extra spaces
+                    normalized = re.sub(r'^\d+\.\s+', '', match).strip()
+                    normalized = ' '.join(normalized.split())
                     
-                    if section_hash not in seen_hashes:
-                        seen_hashes.add(section_hash)
-                        unique_sections.append(section)
+                    if normalized not in seen and len(normalized) > 20:
+                        seen.add(normalized)
+                        unique_matches.append(match)
                 
-                answer = '\n\n'.join(unique_sections)
-                print(f"✅ AI responded (removed {len(sections) - len(unique_sections)} duplicates)")
+                # Rebuild answer with unique sections only
+                if unique_matches:
+                    answer = '\n\n'.join(unique_matches)
+                    
+                    # Add references section if exists
+                    refs_match = re.search(r'(\[\d+\][^\[]+(?:\[\d+\][^\[]+)*$)', result['choices'][0]['message']['content'], re.MULTILINE | re.DOTALL)
+                    if refs_match:
+                        answer += '\n\n' + refs_match.group(1)
+                
+                removed = len(matches) - len(unique_matches)
+                print(f"✅ AI responded (removed {removed} duplicate sections)")
                 return answer
             else:
                 print(f"❌ API failed: {response.status_code}")
