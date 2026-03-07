@@ -566,15 +566,15 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} Provide comprehensive answers. Structure your response clearly with each main point explained fully before moving to the next. Do not repeat the same point multiple times."
+                            "content": f"{role} Answer concisely. Explain each concept once. Never repeat information. Use clear structure: define term, explain characteristics, give example. Stop after covering all points once."
                         },
                         {
                             "role": "user",
                             "content": prompt
                         }
                     ],
-                    "max_tokens": 3000,
-                    "temperature": 0.3
+                    "max_tokens": 800,
+                    "temperature": 0.2
                 },
                 timeout=30
             )
