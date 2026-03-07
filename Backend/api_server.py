@@ -481,26 +481,36 @@ async def chat(request: ChatRequest):
         
         print(f"🔍 Original answer length: {len(answer)} chars")
         
-        # Split by double newlines to get paragraphs
-        paragraphs = answer.split('\n\n')
-        print(f"🔍 Split into {len(paragraphs)} paragraphs")
+        # Step 1: Split by double newlines
+        sections = answer.split('\n\n')
         
-        seen_hashes = set()
-        unique_paragraphs = []
+        # Step 2: Track seen content by normalized hash
+        seen = set()
+        unique_sections = []
         
-        for para in paragraphs:
-            # Create hash of normalized content
-            normalized = ' '.join(para.split())
-            para_hash = hashlib.md5(normalized.encode()).hexdigest()
+        for section in sections:
+            # Normalize: remove extra spaces, lowercase for comparison
+            normalized = ' '.join(section.lower().split())
             
-            if para_hash not in seen_hashes:
-                seen_hashes.add(para_hash)
-                unique_paragraphs.append(para)
-            else:
-                print(f"⚠️ Removing duplicate paragraph: {para[:50]}...")
+            # Skip if we've seen this content before
+            if normalized in seen or len(normalized) < 10:
+                print(f"⚠️ Skipping duplicate/short: {section[:50]}...")
+                continue
+            
+            seen.add(normalized)
+            unique_sections.append(section)
         
-        result.answer = '\n\n'.join(unique_paragraphs)
-        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(paragraphs) - len(unique_paragraphs)} duplicates")
+        # Step 3: Rebuild answer
+        result.answer = '\n\n'.join(unique_sections)
+        
+        # Step 4: Add citations section if not present
+        if result.citations and '[1]' not in result.answer:
+            citations_text = '\n\n**References:**\n'
+            for i, citation in enumerate(result.citations, 1):
+                citations_text += f'[{i}] {citation}\n'
+            result.answer += citations_text
+        
+        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(sections) - len(unique_sections)} duplicates")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
