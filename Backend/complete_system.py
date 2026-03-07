@@ -566,7 +566,7 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} Answer concisely. Explain each concept once. Never repeat information. Use clear structure: define term, explain characteristics, give example. Stop after covering all points once."
+                            "content": f"{role} CRITICAL: Write each point ONLY ONCE. Format: 1. Title - Definition. Characteristics. Example. Then move to point 2. NEVER repeat headings or restate points. Be direct and concise."
                         },
                         {
                             "role": "user",
