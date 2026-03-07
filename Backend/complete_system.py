@@ -590,11 +590,11 @@ class HotSwappableSMEPlugin:
         data = {
             "model": "anthropic/claude-3-haiku",
             "messages": [
-                {"role": "system", "content": self._create_domain_prompt("")},
+                {"role": "system", "content": self._create_domain_prompt("") + "\n\nCRITICAL: Write CONCISELY. Do NOT repeat content. Each point should be unique."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 1000,
-            "temperature": 0.7
+            "max_tokens": 300,
+            "temperature": 0.3
         }
         
         try:
