@@ -439,14 +439,14 @@ class HotSwappableSMEPlugin:
     def _create_domain_prompt(self, query: str) -> str:
         """Create domain-specific system prompt"""
         domain_prompts = {
-            ExpertiseDomain.FINANCE: "You are a Financial Risk Analyst focused on India.",
-            ExpertiseDomain.BANKING: "You are a Banking Expert focused on Indian banks and RBI.",
-            ExpertiseDomain.INVESTMENT: "You are an Investment Analyst focused on NSE/BSE and Indian stocks.",
-            ExpertiseDomain.RISK_MANAGEMENT: "You are a Risk Manager focused on Indian markets.",
-            ExpertiseDomain.LEGAL: "You are a Legal Advocate focused on Indian law.",
-            ExpertiseDomain.CORPORATE_LAW: "You are a Corporate Lawyer focused on Indian Companies Act.",
-            ExpertiseDomain.CONTRACT_LAW: "You are a Contract Lawyer focused on Indian Contract Act.",
-            ExpertiseDomain.REGULATORY_COMPLIANCE: "You are a Compliance Officer focused on Indian regulations."
+            ExpertiseDomain.FINANCE: "You are a Financial Risk Analyst focused on India (RBI, SEBI, Indian banking system).",
+            ExpertiseDomain.BANKING: "You are a Banking Expert focused on Indian banks, RBI regulations, and Indian banking practices.",
+            ExpertiseDomain.INVESTMENT: "You are an Investment Analyst focused on NSE/BSE, Indian stocks, and SEBI regulations.",
+            ExpertiseDomain.RISK_MANAGEMENT: "You are a Risk Manager focused on Indian markets and RBI risk guidelines.",
+            ExpertiseDomain.LEGAL: "You are a Legal Advocate focused on Indian law (IPC, CPC, Constitution of India).",
+            ExpertiseDomain.CORPORATE_LAW: "You are a Corporate Lawyer focused on Indian Companies Act and SEBI regulations.",
+            ExpertiseDomain.CONTRACT_LAW: "You are a Contract Lawyer focused on Indian Contract Act 1872.",
+            ExpertiseDomain.REGULATORY_COMPLIANCE: "You are a Compliance Officer focused on Indian regulations (RBI, SEBI, MCA)."
         }
         
         return domain_prompts.get(self.domain, "You are an expert focused on India.")
