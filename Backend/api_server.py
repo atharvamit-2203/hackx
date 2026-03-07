@@ -26,6 +26,13 @@ import base64
 from firebase_admin import credentials, auth, db
 from firebase_admin import firestore
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # Firebase Admin SDK initialization
 try:
     import firebase_admin
@@ -365,6 +372,27 @@ async def chat(request: ChatRequest):
     try:
         logger.info(f"🔍 Received message: {request.message[:100]}...")
         
+        # Check if SME plugin is available
+        if sme_plugin is None:
+            logger.warning("❌ SME Plugin not initialized, using fallback")
+            response_data = ChatResponse(
+                answer="I'm ready to help! Please let me know what you'd like to discuss.",
+                confidence=0.7,
+                sources=["Fallback response"],
+                methodology="Direct response",
+                domain="general",
+                citations=[],
+                disclaimer="SME Plugin temporarily unavailable"
+            )
+            return JSONResponse(
+                content=response_data.dict(),
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*"
+                }
+            )
+        
         # Detect domain from query
         detected_domain_enum = sme_plugin.detect_domain(request.message)
         logger.info(f"🎯 Detected domain: {detected_domain_enum.value}")
@@ -403,13 +431,13 @@ async def chat(request: ChatRequest):
             
     except Exception as e:
         logger.error(f"❌ Chat endpoint error: {str(e)}", exc_info=True)
-        
+         
         response_data = ChatResponse(
             answer=f"I'm experiencing technical difficulties, but I'm here to help. Please try again or let me know what topic you'd like to explore.",
             confidence=0.3,
             sources=[],
             methodology="Error handling",
-            domain="legal",
+            domain="general",
             citations=[],
             disclaimer="Service temporarily unavailable"
         )
