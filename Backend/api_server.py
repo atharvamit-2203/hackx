@@ -139,14 +139,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
+# Add CORS middleware with more permissive settings
 print("Setting up CORS middleware...")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly include POST
     allow_headers=["*"],
+    expose_headers=["*"]  # Expose all headers
 )
 print("CORS middleware configured with allow_origins=['*']")
 
@@ -346,6 +347,16 @@ async def test_ai():
     except Exception as e:
         print(f"❌ Test Error: {e}")
         return {"status": "error", "error": str(e)}
+
+@app.options("/chat")
+async def chat_options():
+    """Handle OPTIONS requests for /chat endpoint"""
+    return {
+        "status": "allowed",
+        "methods": ["POST", "OPTIONS"],
+        "headers": ["*"],
+        "origins": ["*"]
+    }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
