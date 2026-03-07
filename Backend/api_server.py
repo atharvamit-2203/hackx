@@ -356,6 +356,28 @@ async def test_ai():
         print(f"❌ Test Error: {e}")
         return {"status": "error", "error": str(e)}
 
+@app.get("/test-simple")
+async def test_simple():
+    """Simple test endpoint to verify basic functionality"""
+    try:
+        return JSONResponse(
+            content={"message": "Test successful", "timestamp": str(datetime.now())},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
+    except Exception as e:
+        return JSONResponse(
+            content={"error": str(e)},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
+
 @app.options("/chat")
 async def chat_options():
     """Handle OPTIONS requests for /chat endpoint"""
@@ -365,6 +387,29 @@ async def chat_options():
         "headers": ["*"],
         "origins": ["*"]
     }
+
+@app.post("/chat-simple")
+async def chat_simple(request: dict):
+    """Simple chat endpoint to test basic functionality"""
+    try:
+        message = request.get("message", "")
+        return JSONResponse(
+            content={"answer": f"You said: {message}", "confidence": 0.8},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
+    except Exception as e:
+        return JSONResponse(
+            content={"error": str(e)},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
