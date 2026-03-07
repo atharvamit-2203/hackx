@@ -474,38 +474,20 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # CRITICAL: Remove duplicates at API level as final safeguard
-        answer = result.answer
-        print(f"🔍 Original answer length: {len(answer)} chars")
-        
-        # Split into paragraphs and remove duplicates
-        paragraphs = answer.split('\n\n')
+        # Remove duplicate lines
+        lines = result.answer.split('\n')
         seen = set()
         unique = []
         
-        for para in paragraphs:
-            # Normalize: remove numbers, punctuation, extra spaces for comparison
-            normalized = re.sub(r'[\d\[\]\(\)\.,:;!?-]', '', para.lower())
-            normalized = ' '.join(normalized.split())
-            
-            # Skip if too short or already seen
-            if len(normalized) < 20 or normalized in seen:
-                print(f"⚠️ Skipping duplicate: {para[:40]}...")
-                continue
-            
-            seen.add(normalized)
-            unique.append(para)
+        for line in lines:
+            norm = re.sub(r'^\d+\.\s*', '', line).strip().lower()
+            norm = re.sub(r'\[\d+\]', '', norm).strip()
+            if len(norm) < 10 or norm not in seen:
+                if norm:
+                    seen.add(norm)
+                unique.append(line)
         
-        result.answer = '\n\n'.join(unique)
-        
-        # Step 4: Add citations section if not present
-        if result.citations and '[1]' not in result.answer:
-            citations_text = '\n\n**References:**\n'
-            for i, citation in enumerate(result.citations, 1):
-                citations_text += f'[{i}] {citation}\n'
-            result.answer += citations_text
-        
-        print(f"🔍 Final answer length: {len(result.answer)} chars, removed {len(paragraphs) - len(unique)} duplicates")
+        result.answer = '\n'.join(unique)
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
