@@ -566,7 +566,7 @@ class HotSwappableSMEPlugin:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{role} Provide comprehensive answers with detailed explanations. Write each point once with its full explanation before moving to the next point."
+                            "content": f"{role} Provide comprehensive answers. Structure your response clearly with each main point explained fully before moving to the next. Do not repeat the same point multiple times."
                         },
                         {
                             "role": "user",
