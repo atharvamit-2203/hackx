@@ -557,7 +557,7 @@ class HotSwappableSMEPlugin:
             # Get minimal domain role
             role = self._create_domain_prompt("")
             
-            # Ultra-clean API call
+            # Balanced API call - thorough but not repetitive
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
@@ -565,10 +565,10 @@ class HotSwappableSMEPlugin:
                     "model": "anthropic/claude-3-haiku",
                     "messages": [{
                         "role": "user", 
-                        "content": f"{role} Answer concisely.\n\n{prompt}"
+                        "content": f"{role} Expand each point thoroughly with details and examples. Write naturally without repeating content.\n\n{prompt}"
                     }],
-                    "max_tokens": 2000,
-                    "temperature": 0.4
+                    "max_tokens": 2500,
+                    "temperature": 0.5
                 },
                 timeout=30
             )
