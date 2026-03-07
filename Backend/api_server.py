@@ -380,6 +380,29 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
+        # CRITICAL: Remove duplicates at API level as final safeguard
+        import re
+        answer = result.answer
+        
+        # Split by numbered points and keep only first occurrence
+        parts = re.split(r'\n(?=\d+\.\s)', '\n' + answer)
+        seen_nums = set()
+        unique_parts = []
+        
+        for part in parts:
+            if not part.strip():
+                continue
+            match = re.match(r'(\d+)\.\s', part)
+            if match:
+                num = match.group(1)
+                if num not in seen_nums:
+                    seen_nums.add(num)
+                    unique_parts.append(part)
+            else:
+                unique_parts.append(part)
+        
+        result.answer = '\n'.join(unique_parts).strip()
+        
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
 
