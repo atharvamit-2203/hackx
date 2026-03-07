@@ -596,12 +596,13 @@ class HotSwappableSMEPlugin:
                     if i % 2 == 0:  # Content part
                         content = sections[i].strip()
                         if content and content not in seen_content:
-                            if i > 0:  # Add the number prefix
-                                final_parts.append(sections[i-1])
+                            if i > 0:  # Add the number prefix with proper formatting
+                                final_parts.append('\n\n' + sections[i-1])
                             final_parts.append(content)
                             seen_content.add(content)
                     elif i == 0:  # First part before any numbering
-                        final_parts.append(sections[i])
+                        if sections[i].strip():
+                            final_parts.append(sections[i].strip())
                 
                 answer = ''.join(final_parts)
                 print(f"✅ AI responded (deduplicated)")
