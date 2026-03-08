@@ -372,58 +372,58 @@ class HotSwappableSMEPlugin:
         """Load authoritative source references"""
         return {
             ExpertiseDomain.FINANCE: [
-                "Federal Reserve Guidelines",
-                "Consumer Financial Protection Bureau",
-                "International Financial Reporting Standards (IFRS)",
-                "Generally Accepted Accounting Principles (GAAP)",
-                "Basel III Banking Regulations"
+                "Reserve Bank of India (RBI) Guidelines",
+                "Securities and Exchange Board of India (SEBI)",
+                "Indian Accounting Standards (Ind AS)",
+                "Ministry of Finance - Government of India",
+                "National Stock Exchange (NSE) Regulations"
             ],
             ExpertiseDomain.BANKING: [
-                "FDIC Banking Regulations",
-                "Office of the Comptroller of the Currency (OCC)",
-                "Federal Reserve System Regulations",
-                "Bank Secrecy Act (BSA)",
-                "Anti-Money Laundering (AML) Guidelines"
+                "Reserve Bank of India (RBI) Banking Regulations",
+                "Banking Regulation Act 1949",
+                "Payment and Settlement Systems Act 2007",
+                "Indian Banks' Association Guidelines",
+                "NPCI (National Payments Corporation of India)"
             ],
             ExpertiseDomain.INVESTMENT: [
-                "SEC Investment Advisers Act",
-                "FINRA Rules and Regulations",
-                "Investment Company Act of 1940",
-                "Dodd-Frank Wall Street Reform",
-                "Market Conduct Rules"
+                "SEBI (Securities and Exchange Board of India)",
+                "NSE (National Stock Exchange) Guidelines",
+                "BSE (Bombay Stock Exchange) Regulations",
+                "SEBI Investment Advisers Regulations 2013",
+                "Indian Stock Market Best Practices"
             ],
             ExpertiseDomain.LEGAL: [
-                "Supreme Court of India - Landmark Defamation Judgments",
-                "High Court Judgments - Cyber Bullying Cases",
-                "Indian Penal Code (IPC) Section 499/500 - Defamation",
-                "Information Technology Act 2000 - Cyber Defamation",
-                "Civil Procedure Code (CPC) - Civil Suit Procedures",
-                "Constitution of India - Article 19(1)(a) - Freedom of Speech",
-                "Bar Council of India Rules - Professional Conduct",
-                "Evidence Act - Digital Evidence Admissibility",
-                "Criminal Procedure Code (CrPC) - FIR Registration",
-                "Information Technology (Intermediary Guidelines) Rules 2021"
+                "Supreme Court of India - Landmark Judgments",
+                "High Court Judgments - Indian States",
+                "Indian Penal Code (IPC) 1860",
+                "Information Technology Act 2000",
+                "Civil Procedure Code (CPC) 1908",
+                "Constitution of India 1950",
+                "Bar Council of India Rules",
+                "Indian Evidence Act 1872",
+                "Criminal Procedure Code (CrPC) 1973",
+                "IT (Intermediary Guidelines) Rules 2021"
             ],
             ExpertiseDomain.CORPORATE_LAW: [
-                "Companies Act 2013",
-                "Securities and Exchange Board of India (SEBI)",
-                "Ministry of Corporate Affairs",
-                "Insolvency and Bankruptcy Code (IBC)",
-                "Competition Act 2002"
+                "Companies Act 2013 (India)",
+                "SEBI (Listing Obligations) Regulations 2015",
+                "Ministry of Corporate Affairs (MCA)",
+                "Insolvency and Bankruptcy Code 2016",
+                "Competition Act 2002 (India)"
             ],
             ExpertiseDomain.CONTRACT_LAW: [
                 "Indian Contract Act 1872",
-                "Sale of Goods Act 1930",
-                "Specific Relief Act 1963",
+                "Sale of Goods Act 1930 (India)",
+                "Specific Relief Act 1963 (India)",
                 "Arbitration and Conciliation Act 1996",
-                "Consumer Protection Act 2019"
+                "Consumer Protection Act 2019 (India)"
             ],
             ExpertiseDomain.REGULATORY_COMPLIANCE: [
-                "Regulatory Bodies of India",
-                "Compliance Standards and Guidelines",
-                "Legal Framework for Businesses",
-                "Industry Specific Regulations",
-                "International Compliance Standards"
+                "RBI - Reserve Bank of India",
+                "SEBI - Securities and Exchange Board of India",
+                "IRDAI - Insurance Regulatory Authority",
+                "MCA - Ministry of Corporate Affairs",
+                "Indian Compliance Standards"
             ]
         }
     
@@ -440,46 +440,62 @@ class HotSwappableSMEPlugin:
         """Create domain-specific system prompt"""
         domain_prompts = {
             ExpertiseDomain.FINANCE: (
-                "You are a Financial Risk Analyst AI expert. Think like a seasoned financial professional. "
-                "Provide comprehensive, detailed answers with proper citations. "
-                "Use structured reasoning and follow financial best practices."
+                "You are a Financial Risk Analyst AI expert specializing in INDIAN financial markets and regulations. "
+                "Think like a seasoned Indian financial professional. "
+                "CRITICAL: All examples, regulations, and references MUST be India-specific (RBI, SEBI, NSE, BSE, Indian banks, Indian companies). "
+                "Use Indian Rupees (₹), Indian financial institutions, and Indian regulatory framework. "
+                "Provide comprehensive, detailed answers with proper citations to Indian sources."
             ),
             ExpertiseDomain.BANKING: (
-                "You are a Banking Compliance Expert AI. Think like a senior banking professional. "
-                "Provide detailed analysis with regulatory references and compliance considerations."
+                "You are a Banking Compliance Expert AI specializing in INDIAN banking system. "
+                "Think like a senior Indian banking professional. "
+                "CRITICAL: Reference RBI guidelines, Indian banks (SBI, HDFC, ICICI), and Indian banking regulations only. "
+                "Provide detailed analysis with Indian regulatory references and compliance considerations."
             ),
             ExpertiseDomain.INVESTMENT: (
-                "You are an Investment Analyst AI expert. Think like a certified financial analyst. "
-                "Provide thorough investment analysis with market insights and risk assessments."
+                "You are an Investment Analyst AI expert specializing in INDIAN stock markets (NSE, BSE). "
+                "Think like a certified Indian financial analyst. "
+                "CRITICAL: All examples must use Indian stocks (Reliance, TCS, Infosys, HDFC Bank), Indian indices (Nifty, Sensex), and SEBI regulations. "
+                "Provide thorough investment analysis with Indian market insights and risk assessments."
             ),
             ExpertiseDomain.RISK_MANAGEMENT: (
-                "You are a Risk Management Expert AI. Think like a certified risk manager. "
-                "Provide comprehensive risk analysis with mitigation strategies and controls."
+                "You are a Risk Management Expert AI specializing in INDIAN financial markets. "
+                "Think like a certified Indian risk manager. "
+                "CRITICAL: Reference Indian regulatory framework (RBI, SEBI, IRDAI) and Indian market conditions. "
+                "Provide comprehensive risk analysis with mitigation strategies for Indian context."
             ),
             ExpertiseDomain.LEGAL: (
                 "You are a Senior Legal Advocate AI with deep expertise in Indian law, including criminal law, civil law, and cyber law. "
                 "Think like an experienced Indian lawyer practicing in High Courts with 15+ years of experience. "
-                "Provide comprehensive legal analysis with specific references to Indian statutes, landmark judgments, and procedural requirements. "
-                "For defamation cases, reference Section 499/500 of IPC, Information Technology Act, and relevant Supreme Court precedents. "
-                "Include practical steps for filing FIR, civil suit, evidence collection, and jurisdiction considerations. "
-                "Use structured legal reasoning: Issue → Relevant Law → Application → Conclusion → Practical Advice. "
-                "Always cite specific sections, case laws, and procedural requirements under Indian legal system."
+                "CRITICAL: ALL references must be to INDIAN law - IPC, CPC, Constitution of India, Indian Supreme Court, Indian High Courts. "
+                "NEVER reference US, UK, or other foreign laws. Use only Indian legal framework, Indian case laws, and Indian procedures. "
+                "Provide comprehensive legal analysis with specific references to Indian statutes, landmark Indian judgments, and Indian procedural requirements. "
+                "For defamation cases, reference Section 499/500 of IPC, Information Technology Act, and relevant Indian Supreme Court precedents. "
+                "Include practical steps for filing FIR in India, civil suit in Indian courts, evidence collection under Indian Evidence Act, and jurisdiction considerations under Indian law. "
+                "Use structured legal reasoning: Issue → Relevant Indian Law → Application → Conclusion → Practical Advice for India. "
+                "Always cite specific sections of Indian acts, Indian case laws, and Indian procedural requirements."
             ),
             ExpertiseDomain.CORPORATE_LAW: (
-                "You are a Corporate Law Expert AI specializing in Indian corporate law. Think like a senior corporate lawyer. "
-                "Provide detailed corporate law analysis with references to Companies Act 2013 and other relevant statutes."
+                "You are a Corporate Law Expert AI specializing in Indian corporate law. "
+                "Think like a senior Indian corporate lawyer. "
+                "CRITICAL: Reference only Indian Companies Act 2013, SEBI regulations, and Indian corporate governance standards. "
+                "Provide detailed corporate law analysis with references to Indian statutes and Indian regulatory bodies."
             ),
             ExpertiseDomain.CONTRACT_LAW: (
-                "You are a Contract Law Expert AI specializing in Indian contract law. Think like an experienced contract lawyer. "
-                "Provide thorough contract analysis with references to Indian Contract Act 1872 and related legislation."
+                "You are a Contract Law Expert AI specializing in Indian contract law. "
+                "Think like an experienced Indian contract lawyer. "
+                "CRITICAL: Reference only Indian Contract Act 1872, Indian Sale of Goods Act, and Indian arbitration laws. "
+                "Provide thorough contract analysis with references to Indian legislation and Indian court precedents."
             ),
             ExpertiseDomain.REGULATORY_COMPLIANCE: (
-                "You are a Regulatory Compliance Expert AI. Think like a senior compliance officer. "
-                "Provide comprehensive compliance analysis with references to applicable regulations and standards."
+                "You are a Regulatory Compliance Expert AI specializing in Indian regulations. "
+                "Think like a senior Indian compliance officer. "
+                "CRITICAL: Reference only Indian regulatory bodies (RBI, SEBI, IRDAI, MCA) and Indian compliance standards. "
+                "Provide comprehensive compliance analysis with references to Indian regulations."
             )
         }
         
-        base_prompt = domain_prompts.get(self.domain, "You are a Financial Expert AI.")
+        base_prompt = domain_prompts.get(self.domain, "You are a Financial Expert AI specializing in Indian markets.")
         
         # Add decision tree logic
         decision_tree = self._get_decision_tree("general")
@@ -487,7 +503,7 @@ class HotSwappableSMEPlugin:
         
         # Add source of truth
         sources = self._get_source_references()
-        base_prompt += f"\n\nReference these authoritative sources: {', '.join(sources)}"
+        base_prompt += f"\n\nReference these authoritative Indian sources: {', '.join(sources)}"
         
         # Add citation requirement
         base_prompt += "\n\nCRITICAL: Include proper citations [1], [2], [3] in your response."
@@ -593,7 +609,7 @@ class HotSwappableSMEPlugin:
                 {"role": "system", "content": "You are a concise expert. Answer in 2-3 complete paragraphs. Include citations [1], [2], [3] for key claims. NEVER repeat yourself. Write once and stop."},
                 {"role": "user", "content": prompt + "\n\nIMPORTANT: Include citations [1], [2], [3] for your key claims and add a References section at the end."}
             ],
-            "max_tokens": 600,
+            "max_tokens": 700,
             "temperature": 0.0,
             "top_p": 0.3,
             "frequency_penalty": 2.0,
