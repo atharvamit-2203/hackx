@@ -603,11 +603,21 @@ class HotSwappableSMEPlugin:
     
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
+        # Add explicit Indian context instruction
+        indian_instruction = (
+            "\n\nCRITICAL INDIAN CONTEXT REQUIREMENT: "
+            "This response MUST use ONLY Indian context - Indian laws (IPC, CPC, Constitution of India), "
+            "Indian institutions (RBI, SEBI, NSE, BSE), Indian companies (Reliance, TCS, Infosys, HDFC), "
+            "Indian Rupees (₹), Indian banks (SBI, HDFC, ICICI). "
+            "DO NOT use US/UK/foreign examples, laws, or institutions. "
+            "All citations must reference Indian sources only."
+        )
+        
         data = {
             "model": "anthropic/claude-3-haiku",
             "messages": [
-                {"role": "system", "content": "You are a concise expert. Answer in 2-3 complete paragraphs. Include citations [1], [2], [3] for key claims. NEVER repeat yourself. Write once and stop."},
-                {"role": "user", "content": prompt + "\n\nIMPORTANT: Include citations [1], [2], [3] for your key claims and add a References section at the end."}
+                {"role": "system", "content": "You are an expert specializing in INDIAN context ONLY. Answer in 2-3 complete paragraphs using ONLY Indian examples, laws, and institutions. Include citations [1], [2], [3] for key claims using INDIAN sources. NEVER repeat yourself. Write once and stop."},
+                {"role": "user", "content": prompt + indian_instruction + "\n\nIMPORTANT: Include citations [1], [2], [3] using INDIAN sources only and add a References section with INDIAN sources at the end."}
             ],
             "max_tokens": 700,
             "temperature": 0.0,
