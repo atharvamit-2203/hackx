@@ -474,43 +474,30 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Aggressive deduplication: remove duplicate sections
+        # Remove duplicate numbered lists
         lines = result.answer.split('\n')
-        seen_sections = set()
         seen_content = set()
         unique = []
-        in_duplicate_section = False
         
         for line in lines:
-            # Check for section headers (ends with colon)
-            if line.strip().endswith(':') and len(line.strip()) > 1:
-                section_key = line.strip().lower()
-                if section_key in seen_sections:
-                    in_duplicate_section = True
-                    print(f"⚠️ DUPLICATE SECTION: {line.strip()}")
-                    continue
-                else:
-                    in_duplicate_section = False
-                    seen_sections.add(section_key)
-                    unique.append(line)
-                    print(f"✅ NEW SECTION: {line.strip()}")
-                    continue
+            # Normalize: remove numbers, citations, whitespace
+            norm = re.sub(r'^\d+\.\s*', '', line)
+            norm = re.sub(r'\[\d+\]', '', norm)
+            norm = ' '.join(norm.lower().split())
             
-            # Skip everything in duplicate sections
-            if in_duplicate_section:
+            # Keep blank lines
+            if not norm:
+                unique.append(line)
                 continue
             
-            # For regular content, check for duplicates
-            content_key = re.sub(r'[\d\[\]\.]', '', line.lower()).strip()
-            if content_key and len(content_key) > 10:
-                if content_key in seen_content:
-                    continue
-                seen_content.add(content_key)
+            # Skip if we've seen this exact content
+            if norm in seen_content:
+                continue
             
+            seen_content.add(norm)
             unique.append(line)
         
         result.answer = '\n'.join(unique)
-        print(f"📊 Sections found: {seen_sections}")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
