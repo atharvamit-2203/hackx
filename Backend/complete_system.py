@@ -621,14 +621,14 @@ class HotSwappableSMEPlugin:
                     "content": prompt
                 }
             ],
-            "max_tokens": 600,
-            "temperature": 0.2,
+            "max_tokens": 500,
+            "temperature": 0.1,
             "top_p": 0.9,
         }
         
         try:
             print(f"🔍 Querying LLM with prompt: {prompt[:100]}...")
-            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=20)
+            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=12)
             print(f"📡 API Response Status: {response.status_code}")
             
             if response.status_code == 200:
@@ -668,30 +668,67 @@ class HotSwappableSMEPlugin:
         """
         logger.info(f"Processing query: {query[:50]}...")
         
-        # Check if this is an opinion/request question
-        is_opinion_question = self._is_opinion_question(query)
+        # Parallelize Domain Detection and AI call
+        from concurrent.futures import ThreadPoolExecutor
         
-        if is_opinion_question:
-            # For opinion questions, use context-aware handling
-            response = self._handle_opinion_question(query, context)
-        else:
-            # For factual questions, provide comprehensive response with context
-            response = self._handle_factual_question(query, query_type, context)
+        # Consolidation: We'll assume it's a general factual/advice query
+        # and let the LLM handle the nuance in one go.
         
-        logger.info(f"Query processed successfully. Domain: {response.domain.value}")
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # Future 1: Detect Domain (Fast, local)
+            domain_future = executor.submit(self.detect_domain, query)
+            
+            # Future 2: Main AI Query (Network bound)
+            # We'll use a slightly broader prompt that covers both factual/advice
+            prompt = self._create_unified_prompt(query, context)
+            ai_future = executor.submit(self._query_llm, prompt)
+            
+            # Get results
+            detected_domain = domain_future.result()
+            llm_response = ai_future.result()
+            
+        self.domain = detected_domain
+        
+        # Extract metadata
+        citations = self._extract_citations(llm_response)
+        reasoning_steps = ["Parallel domain detection and AI analysis completed", 
+                           "Unified prompt processing", 
+                           f"Detected context in {detected_domain.value} domain"]
+        sources = self._get_source_references()
+        
+        # Final response
+        response = SMEResponse(
+            answer=llm_response,
+            confidence=0.90,
+            sources=sources,
+            methodology=f"Parallelized expert analysis in {detected_domain.value}",
+            domain=detected_domain,
+            citations=citations,
+            reasoning_steps=reasoning_steps,
+            disclaimer="This analysis is based on domain expertise and should be reviewed with qualified professionals."
+        )
+        
+        logger.info(f"Query processed successfully in parallel. Domain: {detected_domain.value}")
         return response
     
-    def _is_opinion_question(self, query: str) -> bool:
-        """Check if query is asking for opinion, advice, or personal perspective"""
-        opinion_indicators = [
-            'what do you think', 'your opinion', 'what should i', 'what would you',
-            'do you recommend', 'should i', 'how would you', 'in your view',
-            'what is your take', 'do you believe', 'what\'s your perspective',
-            'advice', 'recommend', 'suggest', 'guidance'
-        ]
+    def _create_unified_prompt(self, query: str, context: str = "") -> str:
+        """Create a unified prompt for factual or advice questions"""
+        context_info = self._analyze_context_for_info(context)
+        system_prompt = self._create_domain_prompt(query)
         
-        query_lower = query.lower()
-        return any(indicator in query_lower for indicator in opinion_indicators)
+        return f"""{system_prompt}
+        
+        CONVERSATION CONTEXT: {context}
+        EXTRACTED INFO: {context_info}
+        
+        USER QUERY: {query}
+        
+        INSTRUCTIONS:
+        1. If asking for FACTUAL info: Provide a structured, expert answer with [1][2] citations.
+        2. If asking for ADVICE/OPINION: Acknowledge the context, give expert guidance, and ask ONLY for missing critical info (max 1-2 questions).
+        3. ALWAYS use Indian context (RBI, SEBI, Indian Law).
+        4. Keep it concise (3-4 paragraphs).
+        """
     
     def _handle_opinion_question(self, query: str, context: str = "") -> SMEResponse:
         """Handle opinion/advice questions by asking clarifying questions, using context to avoid repetition"""
@@ -1180,7 +1217,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.3",
+            "version": "1.0.6",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
