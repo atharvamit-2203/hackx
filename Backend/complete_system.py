@@ -590,12 +590,12 @@ class HotSwappableSMEPlugin:
         data = {
             "model": "anthropic/claude-3-haiku",
             "messages": [
-                {"role": "system", "content": "You are a concise expert. Answer in 2-3 short paragraphs maximum. NEVER repeat yourself. NEVER create numbered lists. Write once and stop."},
+                {"role": "system", "content": "You are a concise expert. Answer in 2-3 complete paragraphs. NEVER repeat yourself. NEVER create numbered lists. Write once and stop."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 200,
+            "max_tokens": 600,
             "temperature": 0.0,
-            "top_p": 0.3,
+            "top_p": 0.5,
             "frequency_penalty": 2.0,
             "presence_penalty": 2.0
         }
