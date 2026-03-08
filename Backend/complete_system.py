@@ -604,8 +604,8 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Fast confirmed-free model on OpenRouter
-            "model": "meta-llama/llama-3.2-3b-instruct:free",
+            # High reliability paid model (extremely low cost)
+            "model": "openai/gpt-4o-mini",
             "messages": [
                 {
                     "role": "system",
