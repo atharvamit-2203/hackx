@@ -1,5 +1,5 @@
 // API Service for Backend Integration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hackx-1-vkxr.onrender.com/';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://hackx-1-vkxr.onrender.com').replace(/\/$/, '');
 
 export interface ChatResponse {
   answer: string;
@@ -61,13 +61,13 @@ class ApiService {
     if (typeof window === 'undefined') {
       return 'server-session-' + Date.now();
     }
-    
+
     // Check if we're continuing a previous session
     const storedSessionId = localStorage.getItem('currentSessionId');
     if (storedSessionId) {
       return storedSessionId;
     }
-    
+
     // Otherwise create a new session ID
     return this.generateSessionId();
   }
@@ -81,15 +81,15 @@ class ApiService {
     // In a real app, this would come from server session management
     if (typeof window !== 'undefined') {
       let sessionId = sessionStorage.getItem('plugmind_session_id');
-      
+
       if (!sessionId) {
         sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('plugmind_session_id', sessionId);
       }
-      
+
       return sessionId;
     }
-    
+
     // Fallback for server-side rendering
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
@@ -98,7 +98,7 @@ class ApiService {
    * Send a multi-modal message with files to backend SME plugin with context
    */
   async sendMultiModalMessage(
-    message: string, 
+    message: string,
     files: Array<{
       id: string;
       name: string;
@@ -110,7 +110,7 @@ class ApiService {
   ): Promise<ChatResponse> {
     try {
       let contextPrompt = '';
-      
+
       if (includeContext) {
         // Get context from backend
         contextPrompt = await this.getContextFromBackend();
@@ -139,7 +139,7 @@ class ApiService {
       }
 
       const data = await response.json();
-      
+
       // Skip saving messages to backend for now (endpoints don't exist)
       // await this.saveMessageToBackend(message, 'user', { files });
       // await this.saveMessageToBackend(data.response, 'ai', {
@@ -151,7 +151,7 @@ class ApiService {
       //   disclaimer: data.disclaimer,
       //   multimodal_analysis: data.multimodal_analysis
       // });
-      
+
       return data;
     } catch (error) {
       console.error('Error sending multi-modal message to backend:', error);
@@ -165,7 +165,7 @@ class ApiService {
   async sendMessage(message: string, includeContext: boolean = true): Promise<ChatResponse> {
     try {
       let contextPrompt = '';
-      
+
       if (includeContext) {
         // Get context from backend
         contextPrompt = await this.getContextFromBackend();
@@ -189,7 +189,7 @@ class ApiService {
       }
 
       const data = await response.json();
-      
+
       // Save message to backend
       await this.saveMessageToBackend(message, 'user');
       await this.saveMessageToBackend(data.answer, 'ai', {
@@ -200,7 +200,7 @@ class ApiService {
         citations: data.citations,
         disclaimer: data.disclaimer
       });
-      
+
       return data;
     } catch (error) {
       console.error('Error sending message to backend:', error);
@@ -227,7 +227,7 @@ class ApiService {
     } catch (error) {
       console.error('Error getting context:', error);
     }
-    
+
     return '';
   }
 
@@ -235,8 +235,8 @@ class ApiService {
    * Save message to backend MongoDB
    */
   private async saveMessageToBackend(
-    message: string, 
-    sender: 'user' | 'ai', 
+    message: string,
+    sender: 'user' | 'ai',
     metadata?: any
   ): Promise<void> {
     try {
@@ -300,9 +300,9 @@ class ApiService {
         method: 'GET',
         mode: 'cors',
       });
-      
+
       console.log('Health check response status:', response.status);
-      
+
       if (!response.ok) {
         return false;
       }
