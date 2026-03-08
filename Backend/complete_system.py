@@ -604,16 +604,16 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # High reliability paid model (extremely low cost)
-            "model": "openai/gpt-4o-mini",
+            # Use Gemini Flash 1.5 - Extremely fast and reliable
+            "model": "google/gemini-flash-1.5",
             "messages": [
                 {
                     "role": "system",
                     "content": (
-                        "You are an expert Indian legal and financial advisor. "
-                        "Provide detailed, structured answers using ONLY Indian context. "
-                        "Include citations [1][2][3] and a References section with Indian sources. "
-                        "Keep total length to 3-4 concise paragraphs."
+                        "You are a top-tier Indian legal and financial expert. "
+                        "Respond concisely and professionally in 3-4 paragraphs. "
+                        "Always use Indian context (RBI, SEBI, Indian Law). "
+                        "Cite sources as [1], [2], [3] and list them at the end."
                     )
                 },
                 {
@@ -621,14 +621,18 @@ class HotSwappableSMEPlugin:
                     "content": prompt
                 }
             ],
-            "max_tokens": 500,
+            "max_tokens": 400,
             "temperature": 0.1,
             "top_p": 0.9,
         }
         
         try:
             print(f"🔍 Querying LLM with prompt: {prompt[:100]}...")
-            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=12)
+            start_time = datetime.now()
+            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=10)
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            print(f"📡 API Response Status: {response.status_code} in {duration:.2f}s")
             print(f"📡 API Response Status: {response.status_code}")
             
             if response.status_code == 200:
@@ -667,19 +671,17 @@ class HotSwappableSMEPlugin:
             SMEResponse: Structured response with expert analysis
         """
         logger.info(f"Processing query: {query[:50]}...")
+        import time
+        start_ts = time.time()
         
         # Parallelize Domain Detection and AI call
         from concurrent.futures import ThreadPoolExecutor
-        
-        # Consolidation: We'll assume it's a general factual/advice query
-        # and let the LLM handle the nuance in one go.
         
         with ThreadPoolExecutor(max_workers=2) as executor:
             # Future 1: Detect Domain (Fast, local)
             domain_future = executor.submit(self.detect_domain, query)
             
             # Future 2: Main AI Query (Network bound)
-            # We'll use a slightly broader prompt that covers both factual/advice
             prompt = self._create_unified_prompt(query, context)
             ai_future = executor.submit(self._query_llm, prompt)
             
@@ -688,27 +690,31 @@ class HotSwappableSMEPlugin:
             llm_response = ai_future.result()
             
         self.domain = detected_domain
+        end_ts = time.time()
+        total_duration = end_ts - start_ts
         
         # Extract metadata
         citations = self._extract_citations(llm_response)
-        reasoning_steps = ["Parallel domain detection and AI analysis completed", 
-                           "Unified prompt processing", 
-                           f"Detected context in {detected_domain.value} domain"]
+        reasoning_steps = [
+            f"Parallel processing completed in {total_duration:.2f}s",
+            f"AI Model: Gemini Flash 1.5",
+            f"Detected context in {detected_domain.value} domain"
+        ]
         sources = self._get_source_references()
         
         # Final response
         response = SMEResponse(
             answer=llm_response,
-            confidence=0.90,
+            confidence=0.95,
             sources=sources,
-            methodology=f"Parallelized expert analysis in {detected_domain.value}",
+            methodology=f"Parallelized v1.0.7 in {total_duration:.2f}s",
             domain=detected_domain,
             citations=citations,
             reasoning_steps=reasoning_steps,
-            disclaimer="This analysis is based on domain expertise and should be reviewed with qualified professionals."
+            disclaimer="Expert analysis for Indian context. Time taken: {:.2f}s".format(total_duration)
         )
         
-        logger.info(f"Query processed successfully in parallel. Domain: {detected_domain.value}")
+        logger.info(f"Query processed successfully in {total_duration:.2f}s. Domain: {detected_domain.value}")
         return response
     
     def _create_unified_prompt(self, query: str, context: str = "") -> str:
@@ -1217,7 +1223,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
