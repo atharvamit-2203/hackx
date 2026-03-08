@@ -479,31 +479,35 @@ async def chat(request: ChatRequest):
         seen_content = set()
         seen_sections = set()
         unique = []
-        current_section = None
+        skip_mode = False
         
-        for line in lines:
-            # Check if this is a section header
-            if line.strip() and line.strip().endswith(':'):
-                section_name = line.strip().lower()
-                if section_name in seen_sections:
-                    current_section = 'SKIP'
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Detect section headers (lines ending with :)
+            if stripped and stripped.endswith(':'):
+                section_lower = stripped.lower()
+                if section_lower in seen_sections:
+                    print(f"⚠️ Skipping duplicate section: {stripped}")
+                    skip_mode = True
                     continue
                 else:
-                    seen_sections.add(section_name)
-                    current_section = section_name
+                    print(f"✅ New section: {stripped}")
+                    seen_sections.add(section_lower)
+                    skip_mode = False
                     unique.append(line)
                     continue
             
-            # Skip content in duplicate sections
-            if current_section == 'SKIP':
+            # Skip all content in duplicate sections
+            if skip_mode:
                 continue
             
-            # Normalize content for duplicate detection
+            # Normalize for duplicate detection
             norm = re.sub(r'^\d+\.\s*', '', line)
             norm = re.sub(r'\[\d+\]', '', norm)
             norm = ' '.join(norm.lower().split())
             
-            # Keep blank lines and very short lines
+            # Keep blank/short lines
             if not norm or len(norm) < 5:
                 unique.append(line)
                 continue
@@ -516,6 +520,7 @@ async def chat(request: ChatRequest):
             unique.append(line)
         
         result.answer = '\n'.join(unique)
+        print(f"📊 Removed {len(seen_sections) - len(set(s for s in seen_sections))} duplicate sections")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
