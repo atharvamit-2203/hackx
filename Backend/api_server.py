@@ -474,53 +474,43 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate sections and content
+        # Aggressive deduplication: remove duplicate sections
         lines = result.answer.split('\n')
-        seen_content = set()
         seen_sections = set()
+        seen_content = set()
         unique = []
-        skip_mode = False
+        in_duplicate_section = False
         
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            
-            # Detect section headers (lines ending with :)
-            if stripped and stripped.endswith(':'):
-                section_lower = stripped.lower()
-                if section_lower in seen_sections:
-                    print(f"⚠️ Skipping duplicate section: {stripped}")
-                    skip_mode = True
+        for line in lines:
+            # Check for section headers (ends with colon)
+            if line.strip().endswith(':') and len(line.strip()) > 1:
+                section_key = line.strip().lower()
+                if section_key in seen_sections:
+                    in_duplicate_section = True
+                    print(f"⚠️ DUPLICATE SECTION: {line.strip()}")
                     continue
                 else:
-                    print(f"✅ New section: {stripped}")
-                    seen_sections.add(section_lower)
-                    skip_mode = False
+                    in_duplicate_section = False
+                    seen_sections.add(section_key)
                     unique.append(line)
+                    print(f"✅ NEW SECTION: {line.strip()}")
                     continue
             
-            # Skip all content in duplicate sections
-            if skip_mode:
+            # Skip everything in duplicate sections
+            if in_duplicate_section:
                 continue
             
-            # Normalize for duplicate detection
-            norm = re.sub(r'^\d+\.\s*', '', line)
-            norm = re.sub(r'\[\d+\]', '', norm)
-            norm = ' '.join(norm.lower().split())
+            # For regular content, check for duplicates
+            content_key = re.sub(r'[\d\[\]\.]', '', line.lower()).strip()
+            if content_key and len(content_key) > 10:
+                if content_key in seen_content:
+                    continue
+                seen_content.add(content_key)
             
-            # Keep blank/short lines
-            if not norm or len(norm) < 5:
-                unique.append(line)
-                continue
-            
-            # Skip duplicate content
-            if norm in seen_content:
-                continue
-            
-            seen_content.add(norm)
             unique.append(line)
         
         result.answer = '\n'.join(unique)
-        print(f"📊 Removed {len(seen_sections) - len(set(s for s in seen_sections))} duplicate sections")
+        print(f"📊 Sections found: {seen_sections}")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
