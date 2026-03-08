@@ -604,8 +604,8 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Use Gemini Flash 1.5 - Extremely fast and reliable
-            "model": "google/gemini-flash-1.5",
+            # Use Gemini Flash 2.0 - Extremely fast and reliable
+            "model": "google/gemini-2.0-flash-001",
             "messages": [
                 {
                     "role": "system",
@@ -1223,7 +1223,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.7",
+            "version": "1.0.8",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [

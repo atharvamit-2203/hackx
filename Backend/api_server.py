@@ -264,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "plugin": "SME Plugin API",
-        "version": "1.0.7",
+        "version": "1.0.8",
         "mongodb_connected": mongo_client is not None,
         "cors_enabled": True,
         "timestamp": str(datetime.now())
