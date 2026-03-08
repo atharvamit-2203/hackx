@@ -474,23 +474,26 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate lines aggressively
+        # Remove duplicate lines but keep citations
         lines = result.answer.split('\n')
         seen = set()
         unique = []
         
         for line in lines:
-            # Normalize: remove list numbers, citations, whitespace
-            norm = re.sub(r'^\d+\.', '', line)  # Remove "1.", "2.", etc
-            norm = re.sub(r'\[\d+\]', '', norm)  # Remove [1], [2], etc
-            norm = ' '.join(norm.lower().split())  # Lowercase and normalize whitespace
+            # Extract citations before normalization
+            citations = re.findall(r'\[\d+\]', line)
             
-            # Keep line if it's new content (not seen before)
+            # Normalize: remove list numbers and whitespace for comparison
+            norm = re.sub(r'^\d+\.', '', line)  # Remove "1.", "2."
+            norm = re.sub(r'\[\d+\]', '', norm)  # Remove citations for comparison
+            norm = ' '.join(norm.lower().split())  # Normalize whitespace
+            
+            # Keep if new content or header/short line
             if not norm or len(norm) < 10:
-                unique.append(line)  # Keep headers and short lines
+                unique.append(line)
             elif norm not in seen:
                 seen.add(norm)
-                unique.append(line)
+                unique.append(line)  # Keep original line with citations
         
         result.answer = '\n'.join(unique)
         
