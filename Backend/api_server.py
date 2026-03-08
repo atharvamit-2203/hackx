@@ -478,6 +478,7 @@ async def chat(request: ChatRequest):
         lines = result.answer.split('\n')
         seen_content = set()
         unique = []
+        duplicates_removed = 0
         
         for line in lines:
             # Normalize: remove numbers, citations, whitespace
@@ -492,11 +493,14 @@ async def chat(request: ChatRequest):
             
             # Skip if we've seen this exact content
             if norm in seen_content:
+                duplicates_removed += 1
+                print(f"⚠️ DUPLICATE: {line[:80]}")
                 continue
             
             seen_content.add(norm)
             unique.append(line)
         
+        print(f"📊 Removed {duplicates_removed} duplicate lines out of {len(lines)} total")
         result.answer = '\n'.join(unique)
         
         print(f"✅ Generated response with {len(result.citations)} citations")
