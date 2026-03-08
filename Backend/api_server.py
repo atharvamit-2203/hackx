@@ -387,16 +387,17 @@ async def chat_options():
         "headers": ["*"],
         "origins": ["*"]
     }
-            
-    except Exception as e:
-        return JSONResponse(
-            content={"error": str(e)},
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
-        )
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "plugin": "SME Plugin API",
+        "version": "1.0.4",
+        "mongodb_connected": mongo_client is not None,
+        "cors_enabled": True,
+        "timestamp": str(datetime.now())
+    }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
