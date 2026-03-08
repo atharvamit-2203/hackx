@@ -590,11 +590,12 @@ class HotSwappableSMEPlugin:
         data = {
             "model": "anthropic/claude-3-haiku",
             "messages": [
-                {"role": "system", "content": self._create_domain_prompt("") + "\n\nCRITICAL: Write a SINGLE comprehensive response. Do NOT create multiple sections with the same content. Do NOT repeat information."},
+                {"role": "system", "content": self._create_domain_prompt("") + "\n\nCRITICAL: Write ONE complete response. Stop after providing the answer. Do NOT repeat sections."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 500,
-            "temperature": 0.2
+            "max_tokens": 800,
+            "temperature": 0.1,
+            "stop": ["\n\n1.", "\nRelevant Law:", "\nApplication:", "\nPractical Advice:", "\nFollow-up Questions:"]
         }
         
         try:
