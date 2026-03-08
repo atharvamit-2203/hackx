@@ -387,8 +387,7 @@ async def chat_options():
         "headers": ["*"],
         "origins": ["*"]
     }
-
-        )
+            
     except Exception as e:
         return JSONResponse(
             content={"error": str(e)},
