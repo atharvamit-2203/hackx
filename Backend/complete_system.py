@@ -603,32 +603,32 @@ class HotSwappableSMEPlugin:
     
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
-        # Add explicit Indian context instruction
-        indian_instruction = (
-            "\n\nCRITICAL INDIAN CONTEXT REQUIREMENT: "
-            "This response MUST use ONLY Indian context - Indian laws (IPC, CPC, Constitution of India), "
-            "Indian institutions (RBI, SEBI, NSE, BSE), Indian companies (Reliance, TCS, Infosys, HDFC), "
-            "Indian Rupees (₹), Indian banks (SBI, HDFC, ICICI). "
-            "DO NOT use US/UK/foreign examples, laws, or institutions. "
-            "All citations must reference Indian sources only."
-        )
-        
         data = {
-            "model": "anthropic/claude-3-haiku",
+            # Fast free model — ~5-8s vs ~30s for claude-3-haiku
+            "model": "meta-llama/llama-3.1-8b-instruct:free",
             "messages": [
-                {"role": "system", "content": "You are an expert specializing in INDIAN context ONLY. Answer in 2-3 complete paragraphs using ONLY Indian examples, laws, and institutions. Include citations [1], [2], [3] for key claims using INDIAN sources. NEVER repeat yourself. Write once and stop."},
-                {"role": "user", "content": prompt + indian_instruction + "\n\nIMPORTANT: Include citations [1], [2], [3] using INDIAN sources only and add a References section with INDIAN sources at the end."}
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an Indian legal and financial expert. "
+                        "Answer concisely in 2-3 paragraphs using ONLY Indian context "
+                        "(IPC, RBI, SEBI, Indian courts, ₹). "
+                        "Add citations [1][2][3] and a short References section."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt + "\n\nUse ONLY Indian laws, institutions, and examples."
+                }
             ],
-            "max_tokens": 550,
-            "temperature": 0.0,
-            "top_p": 0.3,
-            "frequency_penalty": 2.0,
-            "presence_penalty": 2.0
+            "max_tokens": 350,
+            "temperature": 0.1,
+            "top_p": 0.5,
         }
         
         try:
             print(f"🔍 Querying LLM with prompt: {prompt[:100]}...")
-            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=30)
+            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=15)
             print(f"📡 API Response Status: {response.status_code}")
             
             if response.status_code == 200:
