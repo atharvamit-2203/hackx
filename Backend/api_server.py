@@ -475,6 +475,7 @@ async def chat(request: ChatRequest):
         )
         
         # Remove duplicate numbered lists
+        print(f"🔍 Starting deduplication...")
         lines = result.answer.split('\n')
         seen_content = set()
         unique = []
@@ -494,15 +495,13 @@ async def chat(request: ChatRequest):
             # Skip if we've seen this exact content
             if norm in seen_content:
                 duplicates_removed += 1
-                print(f"⚠️ DUPLICATE: {line[:80]}")
                 continue
             
             seen_content.add(norm)
             unique.append(line)
         
-        print(f"🔍 Starting deduplication on {len(lines)} lines...")
-        print(f"📊 Removed {duplicates_removed} duplicate lines out of {len(lines)} total")
         result.answer = '\n'.join(unique)
+        print(f"📊 Removed {duplicates_removed} duplicate lines from {len(lines)} total")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")
