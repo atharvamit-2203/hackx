@@ -500,6 +500,7 @@ async def chat(request: ChatRequest):
             seen_content.add(norm)
             unique.append(line)
         
+        print(f"🔍 Starting deduplication on {len(lines)} lines...")
         print(f"📊 Removed {duplicates_removed} duplicate lines out of {len(lines)} total")
         result.answer = '\n'.join(unique)
         
