@@ -3,7 +3,7 @@
 FastAPI Server for SME Plugin Backend
 REST API for Frontend Integration with MongoDB Chat History
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -264,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "plugin": "SME Plugin API",
-        "version": "1.0.1",
+        "version": "1.0.3",
         "mongodb_connected": mongo_client is not None,
         "cors_enabled": True,
         "timestamp": str(datetime.now())
@@ -443,7 +443,7 @@ async def chat_basic(request: dict):
         )
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
     """Process a chat message using SME expertise with context"""
     print(f"🔍 Received message: {request.message[:50]}...")
     
@@ -499,7 +499,40 @@ async def chat(request: ChatRequest):
         print(f"📊 Removed {duplicates_removed} duplicate lines")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
-        print(f"📚 Citations: {result.citations}")
+        
+        # Background non-critical operations
+        if mongo_client:
+            background_tasks.add_task(
+                save_message_to_mongodb,
+                request.session_id,
+                request.user_id,
+                request.message,
+                "user"
+            )
+            background_tasks.add_task(
+                save_message_to_mongodb,
+                request.session_id,
+                request.user_id,
+                result.answer,
+                "ai",
+                {
+                    "domain": result.domain.value,
+                    "confidence": result.confidence,
+                    "sources": result.sources,
+                    "methodology": result.methodology,
+                    "citations": result.citations,
+                    "disclaimer": result.disclaimer
+                }
+            )
+        
+        if firebase_db:
+            background_tasks.add_task(
+                save_chat_to_firebase,
+                request.session_id,
+                request.user_id,
+                result.answer,
+                "ai"
+            )
 
         # Return structured response with proper domain and citations
         return ChatResponse(

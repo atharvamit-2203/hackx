@@ -741,8 +741,8 @@ class HotSwappableSMEPlugin:
         # Get source references
         sources = self._get_source_references()
         
-        # Create response with higher confidence if context provides sufficient info
-        confidence = 0.85 if len(context_analysis) > 100 else 0.65
+        # Static confidence for speed
+        confidence = 0.85
         
         response = SMEResponse(
             answer=llm_response,
@@ -870,8 +870,8 @@ class HotSwappableSMEPlugin:
         # Get source references
         sources = self._get_source_references()
         
-        # Calculate dynamic confidence based on multiple factors
-        confidence = self._calculate_confidence(query, llm_response, context)
+        # Faster, deterministic confidence
+        confidence = 0.90 if len(llm_response) > 300 else 0.80
         
         # Create structured response
         response = SMEResponse(
@@ -1180,7 +1180,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.0",
+            "version": "1.0.3",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
