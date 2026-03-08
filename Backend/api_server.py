@@ -474,26 +474,42 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate lines but keep citations
+        # Remove duplicate content
         lines = result.answer.split('\n')
         seen = set()
         unique = []
+        skip_until_new_section = False
         
         for line in lines:
-            # Extract citations before normalization
-            citations = re.findall(r'\[\d+\]', line)
+            # Normalize for comparison (remove numbers, citations, whitespace)
+            norm = re.sub(r'^\d+\.\s*', '', line)
+            norm = re.sub(r'\[\d+\]', '', norm)
+            norm = ' '.join(norm.lower().split())
             
-            # Normalize: remove list numbers and whitespace for comparison
-            norm = re.sub(r'^\d+\.', '', line)  # Remove "1.", "2."
-            norm = re.sub(r'\[\d+\]', '', norm)  # Remove citations for comparison
-            norm = ' '.join(norm.lower().split())  # Normalize whitespace
+            # Check if this is a section header that we've seen before
+            if line.strip().endswith(':') and norm in seen:
+                skip_until_new_section = True
+                continue
             
-            # Keep if new content or header/short line
+            # Reset skip flag when we hit a new section
+            if line.strip().endswith(':') and norm not in seen:
+                skip_until_new_section = False
+            
+            # Skip lines in duplicate sections
+            if skip_until_new_section:
+                continue
+            
+            # Keep short lines (headers, blank lines)
             if not norm or len(norm) < 10:
                 unique.append(line)
-            elif norm not in seen:
-                seen.add(norm)
-                unique.append(line)  # Keep original line with citations
+                continue
+            
+            # Skip duplicate content
+            if norm in seen:
+                continue
+            
+            seen.add(norm)
+            unique.append(line)
         
         result.answer = '\n'.join(unique)
         
