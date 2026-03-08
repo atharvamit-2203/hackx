@@ -474,8 +474,8 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate numbered lists
-        print(f"🔍 Starting deduplication...")
+        # Remove duplicate numbered lists and paragraphs
+        print(f"🔍 Starting aggressive deduplication...")
         lines = result.answer.split('\n')
         seen_content = set()
         unique = []
@@ -497,11 +497,26 @@ async def chat(request: ChatRequest):
                 duplicates_removed += 1
                 continue
             
-            seen_content.add(norm)
-            unique.append(line)
+            # Also check for 80% similarity to catch near-duplicates
+            is_duplicate = False
+            for seen in seen_content:
+                if len(norm) > 20 and len(seen) > 20:  # Only for substantial content
+                    # Simple similarity check: count matching words
+                    norm_words = set(norm.split())
+                    seen_words = set(seen.split())
+                    if len(norm_words) > 0:
+                        similarity = len(norm_words & seen_words) / len(norm_words)
+                        if similarity > 0.8:
+                            is_duplicate = True
+                            duplicates_removed += 1
+                            break
+            
+            if not is_duplicate:
+                seen_content.add(norm)
+                unique.append(line)
         
         result.answer = '\n'.join(unique)
-        print(f"📊 Removed {duplicates_removed} duplicate lines from {len(lines)} total")
+        print(f"📊 Removed {duplicates_removed} duplicate/similar lines from {len(lines)} total")
         
         print(f"✅ Generated response with {len(result.citations)} citations")
         print(f"📚 Citations: {result.citations}")

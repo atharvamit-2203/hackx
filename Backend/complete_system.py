@@ -590,11 +590,14 @@ class HotSwappableSMEPlugin:
         data = {
             "model": "anthropic/claude-3-haiku",
             "messages": [
-                {"role": "system", "content": self._create_domain_prompt("") + "\n\nABSOLUTE REQUIREMENT: Write your answer ONCE. Do NOT repeat any numbered lists. Do NOT create multiple sections with identical content. If you write '1. Supremacy of the law' once, do NOT write it again. Write naturally in paragraphs, not repetitive lists."},
+                {"role": "system", "content": "You are a concise expert. Answer in 2-3 short paragraphs maximum. NEVER repeat yourself. NEVER create numbered lists. Write once and stop."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 400,
-            "temperature": 0.01
+            "max_tokens": 200,
+            "temperature": 0.0,
+            "top_p": 0.3,
+            "frequency_penalty": 2.0,
+            "presence_penalty": 2.0
         }
         
         try:
