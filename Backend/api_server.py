@@ -388,49 +388,6 @@ async def chat_options():
         "origins": ["*"]
     }
 
-@app.post("/chat-simple")
-async def chat_simple(request: dict):
-    """Simple chat endpoint to test basic functionality"""
-    try:
-        message = request.get("message", "")
-        return JSONResponse(
-            content={"answer": f"You said: {message}", "confidence": 0.8},
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
-        )
-    except Exception as e:
-        return JSONResponse(
-            content={"error": str(e)},
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
-        )
-
-@app.post("/chat-basic")
-async def chat_basic(request: dict):
-    """Basic chat endpoint with no dependencies"""
-    try:
-        message = request.get("message", "")
-        return JSONResponse(
-            content={
-                "answer": f"I received your message: {message}. This is a basic response to test CORS.",
-                "confidence": 0.9,
-                "sources": ["Basic test"],
-                "methodology": "Direct response",
-                "domain": "test",
-                "citations": [],
-                "disclaimer": "This is a test response."
-            },
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*"
-            }
         )
     except Exception as e:
         return JSONResponse(
