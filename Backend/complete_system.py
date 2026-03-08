@@ -619,7 +619,7 @@ class HotSwappableSMEPlugin:
                 {"role": "system", "content": "You are an expert specializing in INDIAN context ONLY. Answer in 2-3 complete paragraphs using ONLY Indian examples, laws, and institutions. Include citations [1], [2], [3] for key claims using INDIAN sources. NEVER repeat yourself. Write once and stop."},
                 {"role": "user", "content": prompt + indian_instruction + "\n\nIMPORTANT: Include citations [1], [2], [3] using INDIAN sources only and add a References section with INDIAN sources at the end."}
             ],
-            "max_tokens": 700,
+            "max_tokens": 550,
             "temperature": 0.0,
             "top_p": 0.3,
             "frequency_penalty": 2.0,
