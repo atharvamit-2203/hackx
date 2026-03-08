@@ -474,46 +474,69 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate numbered lists and paragraphs
-        print(f"🔍 Starting aggressive deduplication...")
+        # Remove duplicate numbered lists and paragraphs - ULTRA AGGRESSIVE
+        print(f"🔍 Starting ultra-aggressive deduplication...")
         lines = result.answer.split('\n')
         seen_content = set()
         unique = []
         duplicates_removed = 0
         
-        for line in lines:
-            # Normalize: remove numbers, citations, whitespace
-            norm = re.sub(r'^\d+\.\s*', '', line)
-            norm = re.sub(r'\[\d+\]', '', norm)
-            norm = ' '.join(norm.lower().split())
-            
-            # Keep blank lines
-            if not norm:
-                unique.append(line)
-                continue
-            
-            # Skip if we've seen this exact content
-            if norm in seen_content:
-                duplicates_removed += 1
-                continue
-            
-            # Also check for 80% similarity to catch near-duplicates
-            is_duplicate = False
-            for seen in seen_content:
-                if len(norm) > 20 and len(seen) > 20:  # Only for substantial content
-                    # Simple similarity check: count matching words
-                    norm_words = set(norm.split())
-                    seen_words = set(seen.split())
-                    if len(norm_words) > 0:
-                        similarity = len(norm_words & seen_words) / len(norm_words)
-                        if similarity > 0.8:
-                            is_duplicate = True
-                            duplicates_removed += 1
-                            break
-            
-            if not is_duplicate:
+        # First pass: detect if response has numbered lists
+        has_numbered_lists = sum(1 for line in lines if re.match(r'^\d+\.\s', line)) > 3
+        
+        if has_numbered_lists:
+            print("⚠️ Detected numbered list pattern - applying strict deduplication")
+            # For numbered lists, keep only first occurrence of each item
+            for line in lines:
+                # Normalize: remove ALL numbers, citations, whitespace
+                norm = re.sub(r'^\d+\.\s*', '', line)  # Remove leading numbers
+                norm = re.sub(r'\[\d+\]', '', norm)  # Remove citations
+                norm = re.sub(r'\d+\.', '', norm)  # Remove any other numbers
+                norm = ' '.join(norm.lower().split())  # Normalize whitespace
+                
+                # Skip empty lines
+                if not norm:
+                    if len(unique) > 0 and unique[-1] != '':
+                        unique.append(line)
+                    continue
+                
+                # Skip if we've seen this content (exact match)
+                if norm in seen_content:
+                    duplicates_removed += 1
+                    continue
+                
                 seen_content.add(norm)
                 unique.append(line)
+        else:
+            # For paragraph responses, use similarity-based deduplication
+            for line in lines:
+                norm = re.sub(r'\[\d+\]', '', line)
+                norm = ' '.join(norm.lower().split())
+                
+                if not norm:
+                    unique.append(line)
+                    continue
+                
+                if norm in seen_content:
+                    duplicates_removed += 1
+                    continue
+                
+                # Check 80% similarity for paragraphs
+                is_duplicate = False
+                for seen in seen_content:
+                    if len(norm) > 20 and len(seen) > 20:
+                        norm_words = set(norm.split())
+                        seen_words = set(seen.split())
+                        if len(norm_words) > 0:
+                            similarity = len(norm_words & seen_words) / len(norm_words)
+                            if similarity > 0.8:
+                                is_duplicate = True
+                                duplicates_removed += 1
+                                break
+                
+                if not is_duplicate:
+                    seen_content.add(norm)
+                    unique.append(line)
         
         result.answer = '\n'.join(unique)
         print(f"📊 Removed {duplicates_removed} duplicate/similar lines from {len(lines)} total")
