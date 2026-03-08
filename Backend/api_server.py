@@ -474,41 +474,45 @@ async def chat(request: ChatRequest):
             context=request.context
         )
         
-        # Remove duplicate content
+        # Remove duplicate sections and content
         lines = result.answer.split('\n')
-        seen = set()
+        seen_content = set()
+        seen_sections = set()
         unique = []
-        skip_until_new_section = False
+        current_section = None
         
         for line in lines:
-            # Normalize for comparison (remove numbers, citations, whitespace)
+            # Check if this is a section header
+            if line.strip() and line.strip().endswith(':'):
+                section_name = line.strip().lower()
+                if section_name in seen_sections:
+                    current_section = 'SKIP'
+                    continue
+                else:
+                    seen_sections.add(section_name)
+                    current_section = section_name
+                    unique.append(line)
+                    continue
+            
+            # Skip content in duplicate sections
+            if current_section == 'SKIP':
+                continue
+            
+            # Normalize content for duplicate detection
             norm = re.sub(r'^\d+\.\s*', '', line)
             norm = re.sub(r'\[\d+\]', '', norm)
             norm = ' '.join(norm.lower().split())
             
-            # Check if this is a section header that we've seen before
-            if line.strip().endswith(':') and norm in seen:
-                skip_until_new_section = True
-                continue
-            
-            # Reset skip flag when we hit a new section
-            if line.strip().endswith(':') and norm not in seen:
-                skip_until_new_section = False
-            
-            # Skip lines in duplicate sections
-            if skip_until_new_section:
-                continue
-            
-            # Keep short lines (headers, blank lines)
-            if not norm or len(norm) < 10:
+            # Keep blank lines and very short lines
+            if not norm or len(norm) < 5:
                 unique.append(line)
                 continue
             
             # Skip duplicate content
-            if norm in seen:
+            if norm in seen_content:
                 continue
             
-            seen.add(norm)
+            seen_content.add(norm)
             unique.append(line)
         
         result.answer = '\n'.join(unique)
