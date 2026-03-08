@@ -264,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "plugin": "SME Plugin API",
-        "version": "1.0.3",
+        "version": "1.0.5",
         "mongodb_connected": mongo_client is not None,
         "cors_enabled": True,
         "timestamp": str(datetime.now())
@@ -386,17 +386,6 @@ async def chat_options():
         "methods": ["POST", "OPTIONS"],
         "headers": ["*"],
         "origins": ["*"]
-    }
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "plugin": "SME Plugin API",
-        "version": "1.0.4",
-        "mongodb_connected": mongo_client is not None,
-        "cors_enabled": True,
-        "timestamp": str(datetime.now())
     }
 
 @app.post("/chat", response_model=ChatResponse)
