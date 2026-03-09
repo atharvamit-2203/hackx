@@ -607,16 +607,16 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Use Gemini Flash 2.0 (Full) - Better throughput and depth
-            "model": "google/gemini-2.0-flash-001",
+            # Use GPT-4o-mini - Ultra-fast startup and inference on OpenRouter
+            "model": "openai/gpt-4o-mini",
             "messages": [
                 {
                     "role": "system",
                     "content": (
                         "You are a top-tier Indian legal/financial AI expert. "
-                        "Provide detailed, comprehensive, and complete answers. "
-                        "Cite Indian sources as [1], [2] for every claim. "
-                        "Be direct and high-speed in delivery."
+                        "Provide detailed, expert answers in 3-4 paragraphs. "
+                        "MANDATORY: Cite Indian sources as [1], [2] for every claim. "
+                        "MANDATORY: List the sources at the end: 'Sources: [1] SourceName, [2] SourceName'."
                     )
                 },
                 {
@@ -625,8 +625,8 @@ class HotSwappableSMEPlugin:
                 }
             ],
             "max_tokens": 1000,
-            "temperature": 0.1,
-            "top_p": 0.9,
+            "temperature": 0.0,
+            "top_p": 1.0,
         }
         
         try:
@@ -730,10 +730,11 @@ class HotSwappableSMEPlugin:
         USER QUERY: {query}
         
         INSTRUCTIONS:
-        1. Provide a detailed, expert answer (3-5 comprehensive paragraphs).
+        1. Provide a detailed, expert answer (3-4 comprehensive paragraphs).
         2. MANDATORY: Cite Indian sources as [1], [2] for EVERY factual claim. 
-        3. Maintain extreme speed by being direct and avoiding fluff.
-        4. If advice: Ask 1-2 critical follow-up questions.
+        3. MANDATORY: At the very bottom, include a list of sources used.
+        4. Maintain extreme speed by being direct and analytical.
+        5. If advice: Ask 1 critical follow-up question.
         """
     
     def _handle_opinion_question(self, query: str, context: str = "") -> SMEResponse:
@@ -1223,7 +1224,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.1.5",
+            "version": "1.1.6",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
