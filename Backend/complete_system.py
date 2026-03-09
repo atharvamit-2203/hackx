@@ -58,11 +58,13 @@ class HotSwappableSMEPlugin:
     def __init__(self, api_key: str, domain: ExpertiseDomain = ExpertiseDomain.FINANCE):
         self.api_key = api_key
         self.domain = domain
-        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
-        self.headers = {
+        self.session = requests.Session()
+        self.session.headers.update({
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://plugmind.ai",
+            "X-Title": "PlugMind SME"
+        })
         
         # Load domain-specific decision trees
         self.decision_trees = self._load_decision_trees()
@@ -610,10 +612,9 @@ class HotSwappableSMEPlugin:
                 {
                     "role": "system",
                     "content": (
-                        "You are a top-tier Indian legal and financial expert. "
-                        "Respond concisely and professionally in 3-4 paragraphs. "
-                        "Always use Indian context (RBI, SEBI, Indian Law). "
-                        "Cite sources as [1], [2], [3] and list them at the end."
+                        "You are a top-tier Indian legal/financial expert. "
+                        "Respond concisely in 2-3 paragraphs. ALWAYS use Indian context (RBI/SEBI/Law). "
+                        "Cite as [1],[2] and list sources at end."
                     )
                 },
                 {
@@ -621,15 +622,15 @@ class HotSwappableSMEPlugin:
                     "content": prompt
                 }
             ],
-            "max_tokens": 400,
+            "max_tokens": 300,
             "temperature": 0.1,
             "top_p": 0.9,
         }
         
         try:
-            print(f"🔍 Querying LLM with prompt: {prompt[:100]}...")
+            print(f"🔍 Parallel AI Request for: {prompt[:50]}...")
             start_time = datetime.now()
-            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=10)
+            response = self.session.post(self.api_url, json=data, timeout=12)
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
             print(f"📡 API Response Status: {response.status_code} in {duration:.2f}s")
@@ -1223,7 +1224,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.8",
+            "version": "1.0.9",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [

@@ -264,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "plugin": "SME Plugin API",
-        "version": "1.0.8",
+        "version": "1.0.9",
         "mongodb_connected": mongo_client is not None,
         "cors_enabled": True,
         "timestamp": str(datetime.now())
@@ -391,7 +391,7 @@ async def chat_options():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
     """Process a chat message using SME expertise with context"""
-    print(f"🔍 Received message: {request.message[:50]}...")
+    print(f"🚀 [v1.0.9] Incoming message: {request.message[:50]}...")
     
     if not sme_plugin:
         return ChatResponse(
@@ -406,45 +406,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
         )
     
     try:
-        # Step 1: Detect the appropriate domain
-        detected_domain = sme_plugin.detect_domain(request.message)
-        print(f"🎯 Detected domain: {detected_domain.value}")
-        
-        # Step 2: Switch plugin to detected domain
-        sme_plugin.domain = detected_domain
-        
-        # Step 3: Process query with full SME capabilities
+        # Step 1: Process query (Parallelized v1.0.9)
         result = sme_plugin.process_query(
             query=request.message,
             query_type="general",
             context=request.context
         )
-        
-        # Fast, simple deduplication for exact duplicate lines
-        lines = result.answer.split('\n')
-        unique_lines = []
-        seen_lines = set()
-        duplicates_removed = 0
-        
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                unique_lines.append(line)
-                continue
-            
-            # Use normalized content for comparison
-            normalized = ' '.join(stripped.lower().split())
-            if normalized in seen_lines:
-                duplicates_removed += 1
-                continue
-            
-            seen_lines.add(normalized)
-            unique_lines.append(line)
-        
-        result.answer = '\n'.join(unique_lines)
-        print(f"📊 Removed {duplicates_removed} duplicate lines")
-        
-        print(f"✅ Generated response with {len(result.citations)} citations")
         
         # Background non-critical operations
         if mongo_client:
@@ -480,17 +447,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
                 "ai"
             )
 
-        # Return structured response with proper domain and citations
-        return ChatResponse(
-            answer=result.answer,
-            confidence=result.confidence,
-            sources=result.sources,
-            methodology=result.methodology,
-            domain=result.domain.value,
-            citations=result.citations,
-            reasoning_steps=result.reasoning_steps,
-            disclaimer=result.disclaimer
-        )
+        return result
             
     except Exception as e:
         print(f"❌ Error processing query: {e}")
