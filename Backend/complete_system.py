@@ -607,23 +607,21 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Use Gemini Flash 2.0 Lite - Absolute fastest model available
-            "model": "google/gemini-2.0-flash-lite-preview-02-05",
+            # Use Gemini Flash 2.0 Lite - Stable OpenRouter ID for maximum speed
+            "model": "google/gemini-2.0-flash-lite-001",
             "messages": [
                 {
                     "role": "system",
                     "content": (
-                        "You are an expert Indian legal/financial AI. "
-                        "BE EXTREMELY FAST. Keep response under 180 words. "
-                        "Use Indian context ONLY. Cite as [1],[2] and list sources at end."
+                        "You are a top-tier Indian legal/financial AI expert. "
+                        "Provide detailed, comprehensive, and complete answers. "
+                        "ALWAYS use Indian context (RBI, SEBI, Indian Law). "
+                        "Cite sources as [1], [2], [3] and list them at the end."
                     )
                 },
                 {
                     "role": "user",
-                    "content": prompt
-                }
-            ],
-            "max_tokens": 450,
+            "max_tokens": 1000,
             "temperature": 0.1,
             "top_p": 0.9,
         }
@@ -734,9 +732,10 @@ class HotSwappableSMEPlugin:
         USER QUERY: {query}
         
         INSTRUCTIONS:
-        1. Give a high-level, expert answer (max 2-3 concise paragraphs).
-        2. Focus on speed and accuracy. 
-        3. If advice: Ask only 1 critical follow-up.
+        1. Provide a detailed and complete expert answer (3-5 comprehensive paragraphs).
+        2. Ensure all legal/financial nuances are covered for the Indian context.
+        3. Maintain high speed by being concise in language but thorough in content.
+        4. If advice: Ask 1-2 critical follow-up questions to better understand the user's needs.
         """
     
     def _handle_opinion_question(self, query: str, context: str = "") -> SMEResponse:
@@ -1226,7 +1225,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [

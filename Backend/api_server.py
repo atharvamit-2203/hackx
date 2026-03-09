@@ -264,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "plugin": "SME Plugin API",
-        "version": "1.1.1",
+        "version": "1.1.2",
         "mongodb_connected": mongo_client is not None,
         "cors_enabled": True,
         "timestamp": str(datetime.now())
@@ -391,7 +391,7 @@ async def chat_options():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
     """Process a chat message using SME expertise with context"""
-    print(f"🚀 [v1.1.1] Incoming message: {request.message[:50]}...")
+    print(f"🚀 [v1.1.2] Incoming message: {request.message[:50]}...")
     
     if not sme_plugin:
         return ChatResponse(
