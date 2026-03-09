@@ -607,15 +607,15 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Use Gemini Flash 2.0 - Extremely fast and reliable
-            "model": "google/gemini-2.0-flash-001",
+            # Use Gemini Flash 2.0 Lite - Absolute fastest model available
+            "model": "google/gemini-2.0-flash-lite-preview-02-05",
             "messages": [
                 {
                     "role": "system",
                     "content": (
-                        "You are a top-tier Indian legal/financial expert. "
-                        "Respond concisely in 2-3 paragraphs. ALWAYS use Indian context (RBI/SEBI/Law). "
-                        "Cite as [1],[2] and list sources at end."
+                        "You are an expert Indian legal/financial AI. "
+                        "BE EXTREMELY FAST. Keep response under 180 words. "
+                        "Use Indian context ONLY. Cite as [1],[2] and list sources at end."
                     )
                 },
                 {
@@ -623,7 +623,7 @@ class HotSwappableSMEPlugin:
                     "content": prompt
                 }
             ],
-            "max_tokens": 300,
+            "max_tokens": 450,
             "temperature": 0.1,
             "top_p": 0.9,
         }
@@ -721,21 +721,22 @@ class HotSwappableSMEPlugin:
     
     def _create_unified_prompt(self, query: str, context: str = "") -> str:
         """Create a unified prompt for factual or advice questions"""
-        context_info = self._analyze_context_for_info(context)
+        # Truncate context to last 2000 chars to prevent prompt bloat
+        truncated_context = context[-2000:] if context else ""
+        context_info = self._analyze_context_for_info(truncated_context)
         system_prompt = self._create_domain_prompt(query)
         
         return f"""{system_prompt}
         
-        CONVERSATION CONTEXT: {context}
+        CONVERSATION CONTEXT: {truncated_context}
         EXTRACTED INFO: {context_info}
         
         USER QUERY: {query}
         
         INSTRUCTIONS:
-        1. If asking for FACTUAL info: Provide a structured, expert answer with [1][2] citations.
-        2. If asking for ADVICE/OPINION: Acknowledge the context, give expert guidance, and ask ONLY for missing critical info (max 1-2 questions).
-        3. ALWAYS use Indian context (RBI, SEBI, Indian Law).
-        4. Keep it concise (3-4 paragraphs).
+        1. Give a high-level, expert answer (max 2-3 concise paragraphs).
+        2. Focus on speed and accuracy. 
+        3. If advice: Ask only 1 critical follow-up.
         """
     
     def _handle_opinion_question(self, query: str, context: str = "") -> SMEResponse:
@@ -1225,7 +1226,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.1.0",
+            "version": "1.1.1",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
