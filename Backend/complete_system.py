@@ -615,8 +615,9 @@ class HotSwappableSMEPlugin:
                     "content": (
                         "You are a top-tier Indian legal/financial AI expert. "
                         "Provide detailed, comprehensive, and complete answers. "
-                        "ALWAYS use Indian context (RBI, SEBI, Indian Law). "
-                        "Cite sources as [1], [2], [3] and list them at the end."
+                        "CRITICAL: Every factual claim MUST have a citation like [1], [2], etc. "
+                        "Aim for at least 3 distinct citations from Indian sources. "
+                        "ALWAYS use Indian context (RBI, SEBI, Indian Law)."
                     )
                 },
                 {
@@ -677,22 +678,17 @@ class HotSwappableSMEPlugin:
         import time
         start_ts = time.time()
         
-        # Parallelize Domain Detection and AI call
-        from concurrent.futures import ThreadPoolExecutor
-        
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            # Future 1: Detect Domain (Fast, local)
-            domain_future = executor.submit(self.detect_domain, query)
-            
-            # Future 2: Main AI Query (Network bound)
-            prompt = self._create_unified_prompt(query, context)
-            ai_future = executor.submit(self._query_llm, prompt)
-            
-            # Get results
-            detected_domain = domain_future.result()
-            llm_response = ai_future.result()
-            
+        # Step 1: Detect Domain Synchronously (Very fast, local)
+        # This MUST happen before prompt creation to ensure the correct persona
+        detected_domain = self.detect_domain(query)
         self.domain = detected_domain
+        
+        # Step 2: Main AI Query (Network bound)
+        # Now prompt will use the CORRECT self.domain
+        prompt = self._create_unified_prompt(query, context)
+        llm_response = self._query_llm(prompt)
+        
+        end_ts = time.time()
         end_ts = time.time()
         total_duration = end_ts - start_ts
         
@@ -736,9 +732,9 @@ class HotSwappableSMEPlugin:
         
         INSTRUCTIONS:
         1. Provide a detailed and complete expert answer (3-5 comprehensive paragraphs).
-        2. Ensure all legal/financial nuances are covered for the Indian context.
-        3. Maintain high speed by being concise in language but thorough in content.
-        4. If advice: Ask 1-2 critical follow-up questions to better understand the user's needs.
+        2. MANDATORY: Cite Indian sources as [1], [2], [3] for EVERY factual claim. 
+        3. Ensure all legal/financial nuances are covered for the Indian context.
+        4. If advice: Ask 1-2 critical follow-up questions.
         """
     
     def _handle_opinion_question(self, query: str, context: str = "") -> SMEResponse:
@@ -1228,7 +1224,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.1.2",
+            "version": "1.1.3",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
