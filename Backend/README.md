@@ -1,81 +1,50 @@
-# Finance & Stock Market Backend
+# Finance & Legal SME Backend (v1.1.2)
 
-A comprehensive financial analysis system powered by AI with complete responses and proper citations.
+A high-performance Subject Matter Expert (SME) plugin for Indian financial and legal analysis, optimized for a **5-10 second response time**.
 
 ## Features
 
-- 🏦 **Finance Expert**: Complete financial analysis with definitions, types, examples
-- 📈 **Stock Market Expert**: Market analysis, predictions, and recommendations  
-- 🤖 **AI-Powered**: Uses OpenRouter API with Claude-3-Haiku for comprehensive responses
-- 📚 **Proper Citations**: Includes references to authoritative financial sources
-- ⚡ **Fast Responses**: Optimized for quick, detailed answers
+- ⚖️ **Legal Expert**: Comprehensive Indian criminal, civil, and corporate law analysis.
+- 🏦 **Finance & Banking**: RBI/SEBI compliant analysis for banking and investments.
+- 📈 **Market Predictions**: Integrated ML models for stock movement forecasting.
+- 🚀 **Ultrafast Inference**: Uses Gemini 2.0 Flash Lite with connection pooling.
+- 🔗 **Smart Citations**: Automatic extraction and reference listing for all expert claims.
+
+## Performance Optimizations
+- **Parallel processing** of domain detection and AI reasoning.
+- **`requests.Session` pooling** to reduce network latency to OpenRouter.
+- **Context truncation** (2000 chars) to prevent prompt bloat.
+- **BackgroundTasks** for non-blocking database/Firebase syncing.
 
 ## Quick Start
 
 1. **Install Dependencies**:
    ```bash
-   pip install requests pyyaml
+   pip install requests fastapi uvicorn pymongo firebase-admin joblib python-dotenv
    ```
 
-2. **Run the Backend**:
+2. **Run Server**:
    ```bash
-   python complete_system.py
+   python api/index.py
    ```
 
-3. **Start Asking Questions**:
+3. **API Access**:
+   POST requests to `/chat` with JSON body:
+   ```json
+   {
+     "message": "What is the rule of law in India?",
+     "session_id": "test_session",
+     "user_id": "user_123",
+     "context": ""
+   }
    ```
-   You > what is a loan?
-   You > what is a bear market?
-   You > explain portfolio diversification
-   ```
-
-## API Configuration
-
-The system uses OpenRouter API with Claude-3-Haiku model. The API key is included in the code.
 
 ## File Structure
 
-```
-Backend/
-├── complete_system.py    # Main backend application
-├── config.yaml          # Configuration settings
-├── core/                # Core strategy and plugin classes
-├── rag/                 # Document retrieval and analysis
-├── llms/                # LLM factory and model handling
-├── adapters/            # Data adapters
-├── docs/                # Sample financial documents
-└── stock_predictor.py   # Stock market prediction models
-```
-
-## Response Format
-
-All responses include:
-- **Comprehensive Analysis**: Detailed explanations with examples
-- **Citations**: Proper references to authoritative sources [1], [2], [3]
-- **Confidence Rating**: Analysis confidence level
-- **Sources Used**: List of data sources and methodologies
-- **Disclaimer**: Professional financial advice disclaimer
-
-## Example Response
-
-```
-# What is a Bear Market?
-
-A bear market is a prolonged period of declining stock prices, typically characterized by a 20% or more drop in a major stock market index over at least a two-month period [1]...
-
-**Analysis Confidence:** HIGH
-**Sources Used:** Stock Market ML Models, Technical Analysis Tools, SEC Financial Regulations
-**Citations:** This response includes properly formatted citations [1], [2], [3]
-**Disclaimer:** Financial and investment advice should be reviewed with qualified professionals
-```
-
-## Dependencies
-
-- Python 3.7+
-- requests
-- pyyaml
-- OpenRouter API access
+- `complete_system.py`: Core `HotSwappableSMEPlugin` logic.
+- `api_server.py`: FastAPI server and background tasks.
+- `stock_predictor.py`: ML Technical analysis logic.
+- `core/`: Expertise domain strategy classes.
 
 ## License
-
 MIT License
