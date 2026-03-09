@@ -621,6 +621,9 @@ class HotSwappableSMEPlugin:
                 },
                 {
                     "role": "user",
+                    "content": prompt
+                }
+            ],
             "max_tokens": 1000,
             "temperature": 0.1,
             "top_p": 0.9,
