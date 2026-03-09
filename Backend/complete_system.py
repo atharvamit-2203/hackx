@@ -58,6 +58,7 @@ class HotSwappableSMEPlugin:
     def __init__(self, api_key: str, domain: ExpertiseDomain = ExpertiseDomain.FINANCE):
         self.api_key = api_key
         self.domain = domain
+        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         self.session = requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {api_key}",
@@ -1224,7 +1225,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.0.9",
+            "version": "1.1.0",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
