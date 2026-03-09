@@ -607,17 +607,16 @@ class HotSwappableSMEPlugin:
     def _query_llm(self, prompt: str) -> str:
         """Query the LLM API"""
         data = {
-            # Use Gemini Flash 2.0 Lite - Stable OpenRouter ID for maximum speed
-            "model": "google/gemini-2.0-flash-lite-001",
+            # Use Gemini Flash 2.0 (Full) - Better throughput and depth
+            "model": "google/gemini-2.0-flash-001",
             "messages": [
                 {
                     "role": "system",
                     "content": (
                         "You are a top-tier Indian legal/financial AI expert. "
                         "Provide detailed, comprehensive, and complete answers. "
-                        "CRITICAL: Every factual claim MUST have a citation like [1], [2], etc. "
-                        "Aim for at least 3 distinct citations from Indian sources. "
-                        "ALWAYS use Indian context (RBI, SEBI, Indian Law)."
+                        "Cite Indian sources as [1], [2] for every claim. "
+                        "Be direct and high-speed in delivery."
                     )
                 },
                 {
@@ -731,9 +730,9 @@ class HotSwappableSMEPlugin:
         USER QUERY: {query}
         
         INSTRUCTIONS:
-        1. Provide a detailed and complete expert answer (3-5 comprehensive paragraphs).
-        2. MANDATORY: Cite Indian sources as [1], [2], [3] for EVERY factual claim. 
-        3. Ensure all legal/financial nuances are covered for the Indian context.
+        1. Provide a detailed, expert answer (3-5 comprehensive paragraphs).
+        2. MANDATORY: Cite Indian sources as [1], [2] for EVERY factual claim. 
+        3. Maintain extreme speed by being direct and avoiding fluff.
         4. If advice: Ask 1-2 critical follow-up questions.
         """
     
@@ -1224,7 +1223,7 @@ Alternatively, if you have a general question about {self.domain.value} concepts
         """Get plugin information and capabilities"""
         return {
             "plugin_name": "Hot-Swappable SME Plugin",
-            "version": "1.1.3",
+            "version": "1.1.5",
             "current_domain": self.domain.value,
             "available_domains": self.get_available_domains(),
             "capabilities": [
